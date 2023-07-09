@@ -1,0 +1,113 @@
+package com.guille.security.demo;
+
+import com.guille.security.auth.RegisterRequest;
+import com.guille.security.models.Crate;
+import com.guille.security.models.Skin;
+import com.guille.security.models.Sticker;
+import com.guille.security.models.dtoRequest.DtoCrate;
+import com.guille.security.models.dtoRequest.DtoSkin;
+import com.guille.security.service.CrateService;
+import com.guille.security.service.RequestedCrateService;
+import com.guille.security.service.SkinService;
+import com.guille.security.service.StickerService;
+import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+
+@RestController
+@RequestMapping("/api/v1/demo-controller")
+public class DemoController {
+
+    private final SkinService skinService;
+    private final StickerService stickerService;
+    private final CrateService crateService;
+    private final RequestedCrateService requestedCrateService;
+
+    @Autowired
+    public DemoController(SkinService skinService,
+                          StickerService stickerService,
+                          CrateService crateService,
+                          RequestedCrateService requestedCrateService){
+        this.skinService = skinService;
+        this.stickerService = stickerService;
+        this.crateService = crateService;
+        this.requestedCrateService = requestedCrateService;
+    }
+
+    @GetMapping
+    public ResponseEntity<String> sayHello(){
+        return ResponseEntity.ok("Hello from secured endpoint");
+    }
+
+    @GetMapping("/requestedCrate")
+    public ResponseEntity<String> listRequestedCrates(){
+        return ResponseEntity.ok(this.requestedCrateService.findAll().toString());
+    }
+    @PostMapping("/skins")
+    public ResponseEntity<String> uploadSkins(@RequestBody List<DtoSkin> request){
+        List<Skin> skinsToBeAdded = new ArrayList<>();
+        for(DtoSkin dts : request){
+            Skin s = Skin.builder()
+                    .id(dts.getId())
+                    .name(dts.getName())
+                    .weapon(dts.getWeapon())
+                    .category(dts.getCategory())
+                    .pattern(dts.getPattern())
+                    .rarity(dts.getRarity())
+                    .image(dts.getImage())
+                    .build();
+            skinsToBeAdded.add(s);
+        }
+        // saveAll
+        this.skinService.saveAll(skinsToBeAdded);
+
+        return ResponseEntity.ok(this.skinService.findAll().toString());
+
+    }
+
+    @PostMapping("/stickers")
+    public ResponseEntity<String> uploadStickers(@RequestBody List<Sticker> request){
+        List<Sticker> stickersToBeAdded = new ArrayList<>();
+        for(Sticker s : request){
+            Sticker stick = Sticker.builder()
+                    .id(s.getId())
+                    .name(s.getName())
+                    .description(s.getDescription())
+                    .rarity(s.getRarity())
+                    .image(s.getImage())
+                    .build();
+            stickersToBeAdded.add(s);
+        }
+        // saveAll
+        this.stickerService.saveAll(stickersToBeAdded);
+
+        return ResponseEntity.ok(this.stickerService.findAll().toString());
+
+    }
+
+    @PostMapping("/crates")
+    public ResponseEntity<String> uploadCrates(@RequestBody List<DtoCrate> request){
+        List<Crate> cratesToBeAdded = new ArrayList<>();
+
+        for(DtoCrate dtc : request){
+                Crate crate = Crate.builder()
+                        .id(dtc.getId())
+                        .name(dtc.getName())
+                        .first_sale_date(dtc.getFirst_sale_date())
+                        .image(dtc.getImage())
+                        .build();
+                cratesToBeAdded.add(crate);
+        }
+        this.crateService.saveAll(cratesToBeAdded);
+
+        return ResponseEntity.ok(this.crateService.findAll().toString());
+
+    }
+
+}
