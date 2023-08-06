@@ -32,7 +32,7 @@ public class TradePetition {
 
     private String description;
 
-    @OneToMany(mappedBy = "trade_petition", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "tradePetition", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<MoneyPetition> moneyOffers = new ArrayList<>();
 
 }

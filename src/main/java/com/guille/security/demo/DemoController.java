@@ -1,5 +1,6 @@
 package com.guille.security.demo;
 
+import com.guille.security.auth.AuthenticationResponse;
 import com.guille.security.auth.RegisterRequest;
 import com.guille.security.models.Crate;
 import com.guille.security.models.Skin;
@@ -10,14 +11,17 @@ import com.guille.security.service.CrateService;
 import com.guille.security.service.RequestedCrateService;
 import com.guille.security.service.SkinService;
 import com.guille.security.service.StickerService;
+import io.micrometer.common.util.StringUtils;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 
 @RestController
@@ -49,6 +53,38 @@ public class DemoController {
     public ResponseEntity<String> listRequestedCrates(){
         return ResponseEntity.ok(this.requestedCrateService.findAll().toString());
     }
+
+
+    // TRAE LAS SKINS FILTRADAS: IMPORTANTE
+    // FALTA ACOMODAR: MAYUSCULAS Y MINUSCULAS, ESPACIOS Y GUIONES BAJOS.
+    @GetMapping("/skins")
+    public ResponseEntity<?> getSkins(@RequestParam(value = "name", required = false) String name,
+                                               @RequestParam(value = "weapon", required = false) String weapon,
+                                               @RequestParam(value = "category", required = false) String category,
+                                               @RequestParam(value = "pattern", required = false) String pattern,
+                                               @RequestParam(value = "rarity", required = false) String rarity)
+    {
+        // PARAMETERS THAT THE SKIN WILL BE SEARCHED BY
+        HashMap<String, String> parameters = new HashMap<>();
+        if(!StringUtils.isBlank(name)) parameters.put("name", name);
+        if(!StringUtils.isBlank(weapon)) parameters.put("weapon", weapon);
+        if(!StringUtils.isBlank(category)) parameters.put("category", category);
+        if(!StringUtils.isBlank(pattern)) parameters.put("pattern", pattern);
+        if(!StringUtils.isBlank(rarity)) parameters.put("rarity", rarity);
+
+
+        try {
+            List<Skin> skins = this.skinService.findSkinsFiltered(parameters);
+            return ResponseEntity.ok(skins);
+        } catch (Exception ex) {
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(ex.getMessage());
+        }
+
+        /*List<Skin> skins = this.skinService.findSkinsFiltered(parameters);
+        return ResponseEntity.ok(skins);*/
+    }
+
+    // POST TO INSERT SKINS
     @PostMapping("/skins")
     public ResponseEntity<String> uploadSkins(@RequestBody List<DtoSkin> request){
         List<Skin> skinsToBeAdded = new ArrayList<>();
@@ -64,13 +100,11 @@ public class DemoController {
                     .build();
             skinsToBeAdded.add(s);
         }
-        // saveAll
         this.skinService.saveAll(skinsToBeAdded);
-
         return ResponseEntity.ok(this.skinService.findAll().toString());
-
     }
 
+    // POST TO INSERT STICKERS
     @PostMapping("/stickers")
     public ResponseEntity<String> uploadStickers(@RequestBody List<Sticker> request){
         List<Sticker> stickersToBeAdded = new ArrayList<>();
@@ -84,13 +118,11 @@ public class DemoController {
                     .build();
             stickersToBeAdded.add(s);
         }
-        // saveAll
         this.stickerService.saveAll(stickersToBeAdded);
-
         return ResponseEntity.ok(this.stickerService.findAll().toString());
-
     }
 
+    // POST TO INSERT CRATES
     @PostMapping("/crates")
     public ResponseEntity<String> uploadCrates(@RequestBody List<DtoCrate> request){
         List<Crate> cratesToBeAdded = new ArrayList<>();
@@ -105,9 +137,7 @@ public class DemoController {
                 cratesToBeAdded.add(crate);
         }
         this.crateService.saveAll(cratesToBeAdded);
-
         return ResponseEntity.ok(this.crateService.findAll().toString());
-
     }
 
 }
