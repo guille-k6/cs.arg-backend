@@ -11,7 +11,7 @@ import java.util.ArrayList;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-public class DtoCrate {
+public class DtoCrate_i {
     @Data
     @Builder
     @AllArgsConstructor

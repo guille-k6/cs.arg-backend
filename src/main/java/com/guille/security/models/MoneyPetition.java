@@ -23,10 +23,6 @@ public class MoneyPetition {
     @Column()
     private Long amount;
 
-    @ManyToOne
-    @JoinColumn(name = "trade_petition")
-    private TradePetition tradePetition;
-
     @Column(name = "country_code")
     private String countryCode;
 

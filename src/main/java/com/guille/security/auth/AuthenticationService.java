@@ -1,6 +1,8 @@
 package com.guille.security.auth;
 
 import com.guille.security.config.JwtService;
+import com.guille.security.models.dtoRequest.AuthenticationRequest;
+import com.guille.security.models.dtoResponse.AuthenticationResponse;
 import com.guille.security.models.enums.Role;
 import com.guille.security.models.User;
 import com.guille.security.repository.UserRepository;
@@ -25,7 +27,7 @@ public class AuthenticationService {
         // First, I check that there are no users with that email
         Optional<User> foundUser = repository.findByEmail(request.getEmail());
         if(foundUser.isPresent()) {
-            throw new IllegalStateException("That email is currently being in use.");
+            throw new IllegalStateException("El email indicado está en uso.");
         }
 
 
@@ -54,11 +56,15 @@ public class AuthenticationService {
         // If the authentication fails, an exception is thrown.
         // So, if I got to this line, means that the authentication passed
         User user = repository.findByEmail(request.getEmail())
-                .orElseThrow(() -> new NoSuchElementException("User not found"));
+                .orElseThrow(() -> new NoSuchElementException("Email no encontrado."));
 
         String jwtToken = jwtService.generateToken(user);
-        return AuthenticationResponse.builder()
-                .token(jwtToken)
-                .build();
+        return new AuthenticationResponse(jwtToken);
+    }
+
+
+    public Boolean emailExists(String email) {
+        Optional<User> u = repository.findByEmail(email);
+        return u.isPresent();
     }
 }

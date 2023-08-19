@@ -8,6 +8,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.springframework.data.annotation.Id;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -36,7 +37,7 @@ public class RequestedSkin {
             joinColumns = @JoinColumn(name = "requested_skin_id"),
             inverseJoinColumns = @JoinColumn(name = "sticker_id")
     )
-    private List<Sticker> stickers;
+    private List<Sticker> stickers = new ArrayList<>();
 
     @Column(name = "float_value")
     private Integer floatValue;

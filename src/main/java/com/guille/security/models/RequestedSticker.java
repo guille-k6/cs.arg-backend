@@ -1,6 +1,7 @@
 package com.guille.security.models;
 
 import com.guille.security.models.enums.PetitionType;
+import com.guille.security.models.enums.PetitionTypeConverter;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -20,14 +21,12 @@ public class RequestedSticker {
     @Column()
     private Long id;
 
-    @Column(name = "trade_id")
-    private Long tradeId;
-
     @ManyToOne(optional = false)
     @JoinColumn(name="sticker_id", nullable=false)
     private Sticker sticker;
 
-    // 0 = request | 1 = offer
+    // false = request | true = offer
     @Column(name = "trade_type")
+    @Convert(converter = PetitionTypeConverter.class)
     private PetitionType tradeType;
 }

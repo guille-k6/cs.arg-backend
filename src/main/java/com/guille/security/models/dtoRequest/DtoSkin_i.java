@@ -11,7 +11,7 @@ import java.util.LinkedList;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-public class DtoSkin {
+public class DtoSkin_i {
     private String id;
     private String name;
     private String description;

@@ -9,7 +9,9 @@ import lombok.NoArgsConstructor;
 import org.springframework.data.annotation.Id;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 @Data
 @Builder
@@ -32,7 +34,20 @@ public class TradePetition {
 
     private String description;
 
-    @OneToMany(mappedBy = "tradePetition", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<MoneyPetition> moneyOffers = new ArrayList<>();
+    @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
+    @JoinColumn(name = "trade_id")
+    private Set<MoneyPetition> moneyOffers = new HashSet<>();
+
+    @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
+    @JoinColumn(name = "trade_id")
+    private Set<RequestedSticker> requestedStickers = new HashSet<>();
+
+    @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
+    @JoinColumn(name = "trade_id")
+    private Set<RequestedSkin> requestedSkins = new HashSet<>();
+
+    @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
+    @JoinColumn(name = "trade_id")
+    private Set<RequestedCrate> requestedCrates = new HashSet<>();
 
 }

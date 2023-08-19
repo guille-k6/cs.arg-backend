@@ -1,4 +1,4 @@
-package com.guille.security.auth;
+package com.guille.security.models.dtoResponse;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -9,8 +9,7 @@ import lombok.NoArgsConstructor;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-public class AuthenticationResponse {
-    private String token;
-
-
+public class DtoMoney_o {
+    private Long amount;
+    private String country_code;
 }
