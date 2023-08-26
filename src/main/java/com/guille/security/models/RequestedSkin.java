@@ -10,7 +10,6 @@ import org.springframework.data.annotation.Id;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 
 @Data
 @Builder
@@ -51,6 +50,8 @@ public class RequestedSkin {
     private Boolean stattrak;
 
     private Integer pattern; // this paint pattern goes from 0-999
+
+    private Boolean souvenir;
 
     // 0 = request | 1 = offer
     @Column(name = "trade_type")

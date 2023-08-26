@@ -45,6 +45,7 @@ public class SkinService {
         String page = null;
         String sortAttribute = null;
         String direction = null;
+
         final Pageable pageable;
         final int MAX_SKINS_PER_PAGE = 20;
 

@@ -17,7 +17,8 @@ public class DtoSkin_o {
     private String name;
     private String image;
     private String rarity;
-    private String category; // here I know if its stt or souvenir or none
+    private Boolean stattrak;
+    private Boolean souvenir;
     private Integer float_value;
     private Integer float_min;
     private Integer float_max;
