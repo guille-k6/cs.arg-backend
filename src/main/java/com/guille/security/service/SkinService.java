@@ -13,18 +13,11 @@ import org.springframework.stereotype.Service;
 import java.util.HashMap;
 import java.util.List;
 
+import static com.guille.security.utils.UtilMethods.tryParseInt;
+
 @Service
 public class SkinService {
     private final SkinRepository skinRepository;
-
-    //UTIL
-    public static int tryParseInt(String value, int defaultVal) {
-        try {
-            return Integer.parseInt(value);
-        } catch (NumberFormatException e) {
-            return defaultVal;
-        }
-    }
 
     @Autowired
     public SkinService(SkinRepository skinRepository){
@@ -69,6 +62,8 @@ public class SkinService {
         if(sortAttribute != null && direction != null && direction.equalsIgnoreCase("ASC")){
             pageable = PageRequest.of(numberOfPage, MAX_SKINS_PER_PAGE, Sort.by(sortAttribute).ascending());
         }else if(sortAttribute != null && direction != null && direction.equalsIgnoreCase("DESC")){
+            pageable = PageRequest.of(numberOfPage, MAX_SKINS_PER_PAGE, Sort.by(sortAttribute).descending());
+        }else if(sortAttribute != null && direction == null){
             pageable = PageRequest.of(numberOfPage, MAX_SKINS_PER_PAGE, Sort.by(sortAttribute).descending());
         }else{
             pageable = PageRequest.of(numberOfPage, MAX_SKINS_PER_PAGE);
