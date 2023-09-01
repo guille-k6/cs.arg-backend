@@ -42,8 +42,9 @@ public class TradePetitionsController {
                                                @RequestParam(value = "sort", required = false) String sortAttribute,
                                                @RequestParam(value = "direction", required = false) String direction)
             /*
-            * Parameters:
+            *  !! Parameters:
             *   -search_type = "PETITION" | "OFFER"
+            *   -item_type  = "WEAPON | CRATE | STICKER"
             *   -direction = "ASC" | "DESC"
             */
 

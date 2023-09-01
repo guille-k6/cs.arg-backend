@@ -13,7 +13,7 @@ import org.springframework.stereotype.Service;
 import java.util.HashMap;
 import java.util.List;
 
-import static com.guille.security.service.SkinService.tryParseInt;
+import static com.guille.security.utils.UtilMethods.tryParseInt;
 
 @Service
 public class StickerService {

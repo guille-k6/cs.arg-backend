@@ -2,7 +2,6 @@ package com.guille.security.config;
 
 import com.guille.security.models.*;
 import com.guille.security.models.dtoResponse.*;
-import com.guille.security.models.enums.PetitionType;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
@@ -69,10 +68,10 @@ public class TradePetitionParser {
                     .stickers(newStickers)
                     .build();
 
-            if(skin.getTradeType() == PetitionType.PETITION){
-                requestedSkins.add(newSkin);
-            }else if(skin.getTradeType() == PetitionType.OFFER){
+            if(skin.getTradeType()){
                 offeredSkins.add(newSkin);
+            }else{
+                requestedSkins.add(newSkin);
             }
         }
 
@@ -86,10 +85,10 @@ public class TradePetitionParser {
                     .image(sticker.getSticker().getImage())
                     .build();
 
-            if(sticker.getTradeType() == PetitionType.PETITION){
-                requestedStickers.add(newSticker);
-            }else if(sticker.getTradeType() == PetitionType.OFFER){
+            if(sticker.getTradeType()){
                 offeredStickers.add(newSticker);
+            }else{
+                requestedStickers.add(newSticker);
             }
         }
 
@@ -101,10 +100,10 @@ public class TradePetitionParser {
                     .image(crate.getCrate().getImage())
                     .build();
 
-            if(crate.getTradeType() == PetitionType.PETITION){
-                requestedCrates.add(newCrate);
-            }else if(crate.getTradeType() == PetitionType.OFFER){
+            if(crate.getTradeType()){ // true = offer; false = petition
                 offeredCrates.add(newCrate);
+            }else{
+                requestedCrates.add(newCrate);
             }
         }
 
@@ -115,10 +114,10 @@ public class TradePetitionParser {
                     .country_code(moneyPetition.getCountryCode())
                     .build();
 
-            if(moneyPetition.getTradeType() == PetitionType.PETITION){
-                requestedMoney = newMoneyPetition;
-            }else if(moneyPetition.getTradeType() == PetitionType.OFFER){
+            if(moneyPetition.getTradeType()){
                 offeredMoney = newMoneyPetition;
+            }else{
+                requestedMoney = newMoneyPetition;
             }
         }
 

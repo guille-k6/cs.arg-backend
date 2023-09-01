@@ -1,6 +1,5 @@
 package com.guille.security.models;
 
-import com.guille.security.models.enums.PetitionType;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -28,5 +27,5 @@ public class MoneyPetition {
 
     // 0 = request | 1 = offer
     @Column(name = "trade_type")
-    private PetitionType tradeType;
+    private Boolean tradeType;
 }
