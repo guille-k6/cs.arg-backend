@@ -40,14 +40,11 @@ public class RequestedSkin {
     @Column(name = "float_value")
     private Integer floatValue;
 
-    @Column(name = "float_min")
-    private Integer floatMin;
-
-    @Column(name = "float_max")
-    private Integer floatMax;
+    private String condition;
 
     private Boolean stattrak;
 
+    @Column(name = "paint_pattern")
     private Integer pattern; // this paint pattern goes from 0-999
 
     private Boolean souvenir;

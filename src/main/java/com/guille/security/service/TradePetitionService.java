@@ -34,7 +34,7 @@ public class TradePetitionService {
     public Page<DtoTradePetition_o> getAllUnfiltered(int page_number) {
         final int MAX_FREE_TRADES_PETITIONS_PER_PAGE = 15;
         // page_number = 0 if empty.
-        Pageable pageable = PageRequest.of(page_number, MAX_FREE_TRADES_PETITIONS_PER_PAGE, Sort.by("creationMs").descending());
+        Pageable pageable = PageRequest.of(page_number, MAX_FREE_TRADES_PETITIONS_PER_PAGE, Sort.by("creation_ms").descending());
 
         // TradePetition unparsed
         Page<TradePetition> tradePetitions = tradePetitionRepository.getAllTradePetitions(pageable);
@@ -55,8 +55,6 @@ public class TradePetitionService {
         boolean stattrak = false;
         boolean souvenir = false;
         boolean special = false;
-        int float_min = -1;
-        int float_max = -1;
         int page = 0;
         String sortAttribute = null;
         String direction = null;
@@ -83,15 +81,13 @@ public class TradePetitionService {
         if (parameters.containsKey("item_type"))
             item_type = parameters.get("item_type").replaceAll("_", " ").toLowerCase();
         if (parameters.containsKey("name")) name = parameters.get("name").replaceAll("_", " ").toLowerCase();
-        if (parameters.containsKey("weapon")) weapon = parameters.get("weapon").replaceAll("_", " ").toLowerCase();
-        if (parameters.containsKey("rarity")) rarity = parameters.get("rarity").replaceAll("_", " ").toLowerCase();
-        if (parameters.containsKey("condition")) condition = parameters.get("page");
+        if (parameters.containsKey("weapon")) weapon = parameters.get("weapon").replaceAll("_", " ");         // I don't need it lowered because
+        if (parameters.containsKey("rarity")) rarity = parameters.get("rarity").replaceAll("_", " ");         // these parameters came from a select in
+        if (parameters.containsKey("condition")) condition = parameters.get("condition").replaceAll("_", " ");// the frontend.
         if (parameters.containsKey("pattern")) pattern = Integer.parseInt(parameters.get("pattern"));
         if (parameters.containsKey("stattrak")) stattrak = Boolean.parseBoolean(parameters.get("stattrak"));
         if (parameters.containsKey("souvenir")) souvenir = Boolean.parseBoolean(parameters.get("souvenir"));
         if (parameters.containsKey("special")) special = Boolean.parseBoolean(parameters.get("special"));
-        if (parameters.containsKey("float_min")) float_min = Integer.parseInt(parameters.get("float_min"));
-        if (parameters.containsKey("float_max")) float_max = Integer.parseInt(parameters.get("float_max"));
         if (parameters.containsKey("page")) page = tryParseInt(parameters.get("page"), 0);
         if (parameters.containsKey("sortAttribute"))
             sortAttribute = parameters.get("sortAttribute").replaceAll("_", " ").toLowerCase();
@@ -101,13 +97,22 @@ public class TradePetitionService {
         pageable = getPageable(page, MAX_TRADE_PETITIONS_PER_PAGE, sortAttribute, direction);
 
         if (item_type == null) {
-            //tradePetitionRepository.getTradePetitionsWithoutType();
-        } else if (item_type.equalsIgnoreCase("WEAPON")) {
-            //tradePetitionRepository.getTradePetitionsWeapon();
+            getAllUnfiltered(page);
+        } else if (item_type.equalsIgnoreCase("SKIN")) {
+            System.out.println("parsed_search_type : " + parsed_search_type.toString());
+            System.out.println("name : " + name);
+            System.out.println("weapon : " + weapon);
+            System.out.println("rarity : " + rarity);
+            System.out.println("condition : " + condition);
+            System.out.println("pattern : " + pattern);
+            System.out.println("stattrak : " + stattrak);
+            System.out.println("souvenir : " + souvenir);
+            System.out.println("special : " + special);
+            tradePetitionsDto = tradePetitionRepository.getTradePetitionsWeapon(parsed_search_type, name, weapon, rarity, condition, pattern, stattrak, souvenir, special, pageable).map(tradePetitionParser::tradePetitionToDTO);
         } else if (item_type.equalsIgnoreCase("CRATE")) {
             tradePetitionsDto = tradePetitionRepository.getTradePetitionsCrate(parsed_search_type, name, pageable).map(tradePetitionParser::tradePetitionToDTO);
         } else if (item_type.equalsIgnoreCase("STICKER")) {
-            //tradePetitionRepository.getTradePetitionsSticker();
+            tradePetitionsDto = tradePetitionRepository.getTradePetitionsSticker(parsed_search_type, name, pageable).map(tradePetitionParser::tradePetitionToDTO);
         } else {
             throw new Exception("No se pudo procesar la petición.");
         }

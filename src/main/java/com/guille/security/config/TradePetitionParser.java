@@ -59,11 +59,10 @@ public class TradePetitionParser {
                     .name(skin.getSkin().getPattern())
                     .image(skin.getSkin().getImage())
                     .rarity(skin.getSkin().getRarity())
+                    .condition(skin.getCondition())
                     .stattrak(skin.getStattrak())
                     .souvenir(skin.getSouvenir())
                     .float_value(skin.getFloatValue())
-                    .float_min(skin.getFloatMin())
-                    .float_max(skin.getFloatMax())
                     .pattern(skin.getPattern())
                     .stickers(newStickers)
                     .build();

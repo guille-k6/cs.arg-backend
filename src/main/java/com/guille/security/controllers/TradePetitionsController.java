@@ -13,7 +13,6 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.HashMap;
-import java.util.List;
 
 @RestController
 @RequestMapping("/api/trade_petitions")
@@ -36,8 +35,6 @@ public class TradePetitionsController {
                                                @RequestParam(value = "stattrak", required = false) String stattrak,
                                                @RequestParam(value = "souvenir", required = false) String souvenir,
                                                @RequestParam(value = "special", required = false) String special, // ESTRELLITA
-                                               @RequestParam(value = "float_min", required = false) String float_min,
-                                               @RequestParam(value = "float_max", required = false) String float_max,
                                                @RequestParam(value = "page", required = false) String page,
                                                @RequestParam(value = "sort", required = false) String sortAttribute,
                                                @RequestParam(value = "direction", required = false) String direction)
@@ -61,8 +58,6 @@ public class TradePetitionsController {
         if(!StringUtils.isBlank(stattrak)) parameters.put("stattrak", stattrak);
         if(!StringUtils.isBlank(souvenir)) parameters.put("souvenir", souvenir);
         if(!StringUtils.isBlank(special)) parameters.put("special", special);
-        if(!StringUtils.isBlank(float_min)) parameters.put("float_min", float_min); //
-        if(!StringUtils.isBlank(float_max)) parameters.put("float_max", (float_max));
         if(!StringUtils.isBlank(page)) parameters.put("page", page);
         if(!StringUtils.isBlank(sortAttribute)) parameters.put("sortAttribute", sortAttribute);
         if(!StringUtils.isBlank(direction)) parameters.put("direction", direction);

@@ -18,8 +18,6 @@ public class DtoSkin_i {
     private String weapon;
     private String category;
     private String pattern;
-    private int min_float;
-    private int max_float;
     private String rarity;
     private Boolean stattrak;
     private String paint_index;
