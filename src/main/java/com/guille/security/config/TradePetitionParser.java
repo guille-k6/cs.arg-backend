@@ -19,6 +19,7 @@ public class TradePetitionParser {
 
         tradePetition.setId(tp.getId());
         tradePetition.setCreationms(tp.getCreationMs());
+        tradePetition.setDescription(tp.getDescription());
         DtoUser_o dtoUser = DtoUser_o.builder()
                 .nickname(tp.getUser().getNickname())
                 .build();

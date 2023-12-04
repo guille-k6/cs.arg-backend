@@ -16,8 +16,8 @@ import org.springframework.data.annotation.Id;
 @Entity
 @Table(name = "sticker")
 public class Sticker {
+
     @jakarta.persistence.Id
-    @Id
     @Column(length = 60)
     private String id;
 

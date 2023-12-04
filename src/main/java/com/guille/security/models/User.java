@@ -21,14 +21,25 @@ import java.util.List;
 @Table(name = "_user")
 public class User implements UserDetails{
     @Id
-    @GeneratedValue
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "_user_seq")
+    @SequenceGenerator(name = "_user_seq", sequenceName = "_user_seq", allocationSize = 1)
     private Integer id;
     private String email;
     private String password;
     private String nickname;
-    private Boolean active;
     @Enumerated(EnumType.STRING)
     private Role role;
+    private Boolean locked = false;
+    private Boolean enabled = false;
+
+    public User(String email, String password, String nickname, Role role, Boolean locked, Boolean enabled) {
+        this.email = email;
+        this.password = password;
+        this.nickname = nickname;
+        this.role = role;
+        this.locked = locked;
+        this.enabled = enabled;
+    }
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
@@ -52,7 +63,7 @@ public class User implements UserDetails{
 
     @Override
     public boolean isAccountNonLocked() {
-        return true;
+        return !locked;
     }
 
     @Override
@@ -62,6 +73,6 @@ public class User implements UserDetails{
 
     @Override
     public boolean isEnabled() {
-        return true;
+        return enabled;
     }
 }

@@ -1,4 +1,4 @@
-package com.guille.security.models.dtoResponse;
+package com.guille.security.auth;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -9,8 +9,6 @@ import lombok.NoArgsConstructor;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-public class AuthenticationResponse {
-    private String token;
-    private String username;
-
+public class ErrorResponse {
+    private String message;
 }
