@@ -3,6 +3,7 @@ package com.guille.security.auth;
 import com.guille.security.models.dtoRequest.AuthenticationRequest;
 import com.guille.security.models.dtoResponse.AuthenticationResponse;
 import lombok.RequiredArgsConstructor;
+import org.apache.coyote.Response;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -35,6 +36,16 @@ public class AuthenticationController {
             return ResponseEntity.ok(response);
         } catch (Exception ex) {
             return ResponseEntity.status(HttpStatus.CONFLICT).body(new ErrorResponse(ex.getMessage()));
+        }
+    }
+
+    @GetMapping("/validate_register")
+    public ResponseEntity<?> validateRegister(@RequestParam("token") String token){
+        try {
+            service.validateRegisterRequest(token);
+            return ResponseEntity.status(HttpStatus.OK).body("Usuario dado de alta");
+        } catch (Exception ex) {
+            return ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY).body(ex.getMessage());
         }
     }
 }

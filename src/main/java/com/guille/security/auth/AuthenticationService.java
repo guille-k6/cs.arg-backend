@@ -7,6 +7,7 @@ import com.guille.security.models.enums.Role;
 import com.guille.security.models.User;
 import com.guille.security.repository.UserRepository;
 import com.guille.security.service.ConfirmationTokenService;
+import com.guille.security.service.UserService;
 import com.guille.security.utils.EmailValidator;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -16,6 +17,7 @@ import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.io.FileNotFoundException;
 import java.time.LocalDateTime;
 import java.util.NoSuchElementException;
 import java.util.Optional;
@@ -30,6 +32,7 @@ public class AuthenticationService {
     private final AuthenticationManager authenticationManager;
     private final EmailValidator emailValidator;
     private final ConfirmationTokenService confirmationTokenService;
+    private final UserService userService;
     private final int CONFIRMATION_MINUTES = 30;
 
     @Transactional
@@ -63,7 +66,6 @@ public class AuthenticationService {
                 LocalDateTime.now().plusMinutes(CONFIRMATION_MINUTES),
                 user
         );
-        System.out.println(confirmationToken.toString());
         confirmationTokenService.saveConfirmationToken(confirmationToken);
 
         // Generate a jwtoken
@@ -85,12 +87,24 @@ public class AuthenticationService {
             throw new CustomAuthenticationException("Email y/o contraseña incorrecto");
         }
 
-        // If the authentication fails, an exception is thrown.
         // So, if I got to this line, means that the authentication passed
         User user = repository.findByEmail(request.getEmail())
                 .orElseThrow(() -> new NoSuchElementException("Email no encontrado."));
 
         String jwtToken = jwtService.generateToken(user);
         return new AuthenticationResponse(jwtToken, user.getNickname());
+    }
+
+    @Transactional
+    public void validateRegisterRequest(String token) throws FileNotFoundException {
+        Optional<ConfirmationToken> theToken = confirmationTokenService.getConfirmationToken(token);
+        if(theToken.isEmpty()) throw new FileNotFoundException("Token no válido");
+        if(theToken.get().getConfirmedAt() != null) throw new IllegalStateException("El email ya fue confirmado");
+        LocalDateTime expiredAt = theToken.get().getExpiresAt();
+        if(expiredAt.isBefore(LocalDateTime.now())) throw new IllegalStateException("El token esta vencido");
+
+        userService.enableUser(theToken.get().getUser().getEmail()); // Enable the user.
+        confirmationTokenService.setConfirmedAt(token);
+
     }
 }
