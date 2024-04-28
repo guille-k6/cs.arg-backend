@@ -14,17 +14,6 @@ public class AuthenticationController {
 
     private final AuthenticationService service;
 
-    @PostMapping("/register")
-    public ResponseEntity<?> register(@RequestBody RegisterRequest request){
-        //return ResponseEntity.ok(service.register(request));
-        try {
-            AuthenticationResponse response = service.register(request);
-            return ResponseEntity.ok(response);
-        } catch (Exception ex) {
-            return ResponseEntity.status(HttpStatus.CONFLICT).body(ex.getMessage());
-        }
-    }
-
     @PostMapping("/authenticate")
     public ResponseEntity<?> authenticate(@RequestBody AuthenticationRequest request) {
         try {
@@ -35,7 +24,18 @@ public class AuthenticationController {
         }
     }
 
-    @GetMapping("/validate_register")
+    @PostMapping("/register")
+    public ResponseEntity<?> register(@RequestBody RegisterRequest request){
+        //return ResponseEntity.ok(service.register(request));
+        try {
+            service.register(request);
+            return ResponseEntity.ok("Usuario registrado, confirme su mail para continuar.");
+        } catch (Exception ex) {
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(ex.getMessage());
+        }
+    }
+
+    @GetMapping("/confirm_register")
     public ResponseEntity<?> validateRegister(@RequestParam("token") String token){
         try {
             service.validateRegisterRequest(token);

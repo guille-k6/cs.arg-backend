@@ -27,7 +27,7 @@ import java.util.UUID;
 @Service
 @RequiredArgsConstructor
 public class AuthenticationService {
-    private final UserRepository repository;
+    private final UserRepository UserRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
     private final AuthenticationManager authenticationManager;
@@ -37,17 +37,19 @@ public class AuthenticationService {
     private final EmailSender emailSender;
 
     @Transactional
-    public AuthenticationResponse register(RegisterRequest request) {
-        // Check email is valid
-        boolean isValidEmail = emailValidator.test(request.getEmail());
-        if(!isValidEmail) throw new IllegalStateException("Formato de email incorrecto");
-        // Check there are no users with that email
-        Optional<User> foundUser = repository.findByEmail(request.getEmail());
-        if(foundUser.isPresent()) throw new IllegalStateException("El email elegido está en uso");
-        // Check there are no users with that nick
-        Optional<User> foundUserNickname = repository.findByNickname(request.getNickname());
-        if(foundUserNickname.isPresent()) throw new IllegalStateException("El nick elegido no está disponible");
-
+    public void register(RegisterRequest request) {
+        boolean isEmailValid = emailValidator.test(request.getEmail());
+        if(!isEmailValid){
+            throw new IllegalStateException("Formato de email incorrecto");
+        }
+        Optional<User> foundUser = UserRepository.findByEmail(request.getEmail());
+        if(foundUser.isPresent()){
+            throw new IllegalStateException("El email elegido está en uso");
+        }
+        Optional<User> foundUserNickname = UserRepository.findByNickname(request.getNickname());
+        if(foundUserNickname.isPresent()) {
+            throw new IllegalStateException("El nick elegido no está disponible");
+        }
         // Create the user
         User user = User.builder()
                 .email(request.getEmail())
@@ -57,61 +59,49 @@ public class AuthenticationService {
                 .enabled(false)
                 .locked(false)
                 .build();
-        repository.save(user);
-
+        UserRepository.save(user);
         // Generate the confirmation token for the account creation
-        final int CONFIRMATION_MINUTES = 30;
+        final int CONFIRMATION_MINUTES = 15;
         String uuidToken = UUID.randomUUID().toString();
         ConfirmationToken confirmationToken = new ConfirmationToken(
                 uuidToken,
                 LocalDateTime.now(),
                 LocalDateTime.now().plusMinutes(CONFIRMATION_MINUTES),
-                user
-        );
+                user);
         confirmationTokenService.saveConfirmationToken(confirmationToken);
-
-        // Generate a jwtoken
-        String jwtToken = jwtService.generateToken(user);
-
-        //Send email
-        String link = "http://localhost:8080/api/v1/registration/confirm?token=" + confirmationToken;
+        // Send email
+        String link = "http://localhost:8080/api/v1/auth/confirm_register?token=" + confirmationToken.getToken();
         emailSender.send(request.getEmail(), buildEmail(request.getNickname() , link));
-
-        return AuthenticationResponse.builder()
-                .token(jwtToken)
-                .username(request.getNickname())
-                .build();
-    }
-
-    public AuthenticationResponse authenticate(AuthenticationRequest request) {
-        try {
-            authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(
-                    request.getEmail(),
-                    request.getPassword()
-            ));
-        }catch(AuthenticationException e){
-            throw new CustomAuthenticationException("Email y/o contraseña incorrecto");
-        }
-
-        // So, if I got to this line, means that the authentication passed
-        User user = repository.findByEmail(request.getEmail())
-                .orElseThrow(() -> new NoSuchElementException("Email no encontrado."));
-
-        String jwtToken = jwtService.generateToken(user);
-        return new AuthenticationResponse(jwtToken, user.getNickname());
     }
 
     @Transactional
     public void validateRegisterRequest(String token) throws FileNotFoundException {
         Optional<ConfirmationToken> theToken = confirmationTokenService.getConfirmationToken(token);
-        if(theToken.isEmpty()) throw new FileNotFoundException("Token no válido");
-        if(theToken.get().getConfirmedAt() != null) throw new IllegalStateException("El email ya fue confirmado");
+        if(theToken.isEmpty()){
+            throw new FileNotFoundException("Token no válido");
+        }
+        if(theToken.get().getConfirmedAt() != null){
+            throw new IllegalStateException("El email ya fue confirmado");
+        }
         LocalDateTime expiredAt = theToken.get().getExpiresAt();
-        if(expiredAt.isBefore(LocalDateTime.now())) throw new IllegalStateException("El token esta vencido");
-
+        if(expiredAt.isBefore(LocalDateTime.now())){
+            throw new IllegalStateException("El token esta vencido");
+        }
         userService.enableUser(theToken.get().getUser().getEmail()); // Enable the user.
         confirmationTokenService.setConfirmedAt(token);
 
+    }
+
+    public AuthenticationResponse authenticate(AuthenticationRequest request) {
+        try {
+            authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(request.getEmail(), request.getPassword()));
+        }catch(AuthenticationException e){
+            throw new CustomAuthenticationException("Email y/o contraseña incorrecto");
+        }
+        // If I get to this line, means that the authentication passed
+        User user = UserRepository.findByEmail(request.getEmail()).orElseThrow(() -> new NoSuchElementException("Email no encontrado."));
+        String jwtToken = jwtService.generateToken(user);
+        return new AuthenticationResponse(jwtToken, user.getNickname());
     }
 
     private String buildEmail(String name, String link) {
