@@ -1,16 +1,16 @@
 package backend.controllers;
 
+import backend.models.TradePetition;
+import backend.models.dtoRequest.DtoTradePetition_i;
 import backend.service.TradePetitionService;
 import backend.models.dtoResponse.DtoTradePetition_o;
 import io.micrometer.common.util.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.HashMap;
 
@@ -35,8 +35,8 @@ public class TradePetitionsController {
 
     /**
      * Gets the tradePetitions that match all the potential filters
-     * @param search_type
-     * @param item_type
+     * @param search_type "PETITION" or "OFFER"
+     * @param item_type "WEAPON | CRATE | STICKER"
      * @param name
      * @param weapon
      * @param rarity
@@ -44,10 +44,10 @@ public class TradePetitionsController {
      * @param pattern
      * @param stattrak
      * @param souvenir
-     * @param special
+     * @param special for items like knives or gloves
      * @param page
      * @param sortAttribute
-     * @param direction
+     * @param direction "ASC" | "DESC"
      * @return Json page of DtoTraPetition_o
      */
     @GetMapping("/filtered")
@@ -60,23 +60,16 @@ public class TradePetitionsController {
                                                @RequestParam(value = "pattern", required = false) String pattern,
                                                @RequestParam(value = "stattrak", required = false) String stattrak,
                                                @RequestParam(value = "souvenir", required = false) String souvenir,
-                                               @RequestParam(value = "special", required = false) String special, // ESTRELLITA
+                                               @RequestParam(value = "special", required = false) String special,
                                                @RequestParam(value = "page", required = false) String page,
                                                @RequestParam(value = "sort", required = false) String sortAttribute,
                                                @RequestParam(value = "direction", required = false) String direction) {
-            /*
-            *  !! Parameters:
-            *   -search_type = "PETITION" | "OFFER"
-            *   -item_type  = "WEAPON | CRATE | STICKER"
-            *   -direction = "ASC" | "DESC"
-            */
-        // PARAMETERS THAT THE TRADE PETITION WILL BE SEARCHED BY
         HashMap<String, String> parameters = new HashMap<>();
         if(!StringUtils.isBlank(search_type)) parameters.put("search_type", search_type);
         if(!StringUtils.isBlank(item_type)) parameters.put("item_type", item_type);
         if(!StringUtils.isBlank(name)) parameters.put("name", name);
         if(!StringUtils.isBlank(weapon)) parameters.put("weapon", weapon);
-        if(!StringUtils.isBlank(rarity)) parameters.put("rarity", rarity); //
+        if(!StringUtils.isBlank(rarity)) parameters.put("rarity", rarity);
         if(!StringUtils.isBlank(condition)) parameters.put("condition", (condition));
         if(!StringUtils.isBlank(pattern)) parameters.put("pattern", pattern);
         if(!StringUtils.isBlank(stattrak)) parameters.put("stattrak", stattrak);
@@ -91,5 +84,15 @@ public class TradePetitionsController {
         } catch (Exception ex) {
             return ResponseEntity.status(HttpStatus.CONFLICT).body(ex.getMessage());
         }
+    }
+
+    @PostMapping("/create")
+    public ResponseEntity<?> createTradePetition(@RequestBody DtoTradePetition_i dtoTradePetition){
+        System.out.println("todo");
+        TradePetition tradePetition = new TradePetition();
+        if(tradePetitionService.createTradePetition(tradePetition)){
+            return ResponseEntity.ok("Petición de intercambio dada de alta");
+        }
+        return ResponseEntity.status(HttpStatus.CONFLICT).body("No se pudo crear la entidad.");
     }
 }

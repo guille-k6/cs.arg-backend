@@ -136,4 +136,17 @@ public class TradePetitionService {
         }
         return tradePetitionsDto;
     }
+
+    public boolean createTradePetition(TradePetition tradePetition) {
+        TradePetition updatedTradePetition;
+        try {
+            updatedTradePetition = tradePetitionRepository.save(tradePetition);
+        } catch (Exception e) {
+            return false;
+        }
+        if (updatedTradePetition.getId() == null || updatedTradePetition.getId() < 0){
+            return false;
+        }
+        return true;
+    }
 }

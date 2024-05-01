@@ -18,7 +18,7 @@ public class SecurityApplication {
 
 	}
 
-	// Solves CORS problems: Should probably be changed when deployed
+	// TODO: Solves CORS problems: Should probably be changed when deployed
 	@Bean
 	public WebMvcConfigurer corsConfigurer() {
 		return new WebMvcConfigurer() {

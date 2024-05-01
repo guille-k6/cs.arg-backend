@@ -6,14 +6,15 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.util.ArrayList;
+import java.util.List;
 
 @Data
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
 public class DtoTradePetitionSide_o {
-    private ArrayList<DtoSkin_o> skins;
-    private ArrayList<DtoSticker_o> stickers;
-    private ArrayList<DtoCrate_o> crates;
+    private List<DtoSkin_o> skins;
+    private List<DtoSticker_o> stickers;
+    private List<DtoCrate_o> crates;
     private DtoMoney_o money;
 }
