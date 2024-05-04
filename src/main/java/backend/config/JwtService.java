@@ -18,6 +18,12 @@ import java.util.function.Function;
 public class JwtService {
 
     private static final String SECRET_KEY = "4E645267556B58703273357638792F423F4428472B4B6250655368566D597133";
+
+    /**
+     * It extracts the email! That's because we use the email in the login
+     * @param token a jwt
+     * @return the email of the user whom logged with that token
+     */
     public String extractUsername(String token){
         return extractClaim(token, Claims::getSubject);
 

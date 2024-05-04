@@ -3,8 +3,6 @@ package backend.service;
 import backend.config.TradePetitionParser;
 import backend.models.TradePetition;
 import backend.models.dtoResponse.DtoTradePetition_o;
-import backend.models.*;
-import backend.models.dtoResponse.*;
 import backend.repository.TradePetitionRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -144,9 +142,6 @@ public class TradePetitionService {
         } catch (Exception e) {
             return false;
         }
-        if (updatedTradePetition.getId() == null || updatedTradePetition.getId() < 0){
-            return false;
-        }
-        return true;
+        return updatedTradePetition.getId() != null && updatedTradePetition.getId() >= 0;
     }
 }

@@ -1,5 +1,6 @@
 package backend.controllers;
 
+import backend.config.TradePetitionParser;
 import backend.models.TradePetition;
 import backend.models.dtoRequest.DtoTradePetition_i;
 import backend.service.TradePetitionService;
@@ -18,9 +19,11 @@ import java.util.HashMap;
 @RequestMapping("/api/trade_petitions")
 public class TradePetitionsController {
     private final TradePetitionService tradePetitionService;
+    private final TradePetitionParser tradePetitionParser;
     @Autowired
-    public TradePetitionsController(TradePetitionService tradePetitionService){
+    public TradePetitionsController(TradePetitionService tradePetitionService, TradePetitionParser tradePetitionParser){
         this.tradePetitionService = tradePetitionService;
+        this.tradePetitionParser = tradePetitionParser;
     }
 
     @GetMapping("/public")
@@ -88,11 +91,14 @@ public class TradePetitionsController {
 
     @PostMapping("/create")
     public ResponseEntity<?> createTradePetition(@RequestBody DtoTradePetition_i dtoTradePetition){
-        System.out.println("todo");
-        TradePetition tradePetition = new TradePetition();
+        TradePetition tradePetition = tradePetitionParser.DtoToTradePetition(dtoTradePetition);
         if(tradePetitionService.createTradePetition(tradePetition)){
             return ResponseEntity.ok("Petición de intercambio dada de alta");
         }
         return ResponseEntity.status(HttpStatus.CONFLICT).body("No se pudo crear la entidad.");
     }
 }
+
+
+
+

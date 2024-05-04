@@ -8,6 +8,8 @@ import lombok.NoArgsConstructor;
 import org.springframework.data.annotation.Id;
 
 import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Set;
 
 @Data
@@ -33,18 +35,18 @@ public class TradePetition {
 
     @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
     @JoinColumn(name = "trade_id")
-    private Set<MoneyPetition> moneyOffers = new HashSet<>();
+    private List<MoneyPetition> moneyOffers = new LinkedList<>();
 
     @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
     @JoinColumn(name = "trade_id")
-    private Set<RequestedSticker> requestedStickers = new HashSet<>();
+    private List<RequestedSticker> requestedStickers = new LinkedList<>();
 
     @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
     @JoinColumn(name = "trade_id")
-    private Set<RequestedSkin> requestedSkins = new HashSet<>();
+    private List<RequestedSkin> requestedSkins = new LinkedList<>();
 
     @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
     @JoinColumn(name = "trade_id")
-    private Set<RequestedCrate> requestedCrates = new HashSet<>();
+    private List<RequestedCrate> requestedCrates = new LinkedList<>();
 
 }

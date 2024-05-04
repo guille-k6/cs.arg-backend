@@ -1,5 +1,6 @@
 package backend.service;
 
+import backend.models.User;
 import backend.repository.UserRepository;
 import lombok.AllArgsConstructor;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -18,5 +19,8 @@ public class UserService implements UserDetailsService {
     }
     public void enableUser(String email){
         userRepository.enableUser(email);
+    }
+    public User loadUserByEmail(String email) throws UsernameNotFoundException {
+        return userRepository.findByEmail(email).orElseThrow(() -> new UsernameNotFoundException(USER_NOT_FOUND_MSG));
     }
 }

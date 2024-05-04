@@ -1,20 +1,30 @@
 package backend.config;
 
 import backend.models.*;
+import backend.models.dtoRequest.DtoTradePetitionSide_i;
+import backend.models.dtoRequest.DtoTradePetition_i;
 import backend.models.dtoResponse.*;
-import backend.models.*;
-import backend.models.dtoResponse.*;
+import backend.service.UserService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
+import java.util.LinkedList;
+import java.util.List;
 
 /**
- * The purpose of this class is to have a method that takes a TradePetition as an input
- * and returns an instance of the DTO_TradePetition. See usage -->
- * tradePetitions.map(tradePetitionParser::tradePetitionToDTO);
+ * The purpose of this class is to Map from TradePetitions to their respectivo input or output Dto
  **/
 @Component
 public class TradePetitionParser {
+    private final JwtService jwtService;
+    private final UserService userService;
+    @Autowired
+    public TradePetitionParser(JwtService jwtService, UserService userService){
+        this.jwtService = jwtService;
+        this.userService = userService;
+    }
+
     public DtoTradePetition_o tradePetitionToDTO(TradePetition tp) {
 
         DtoTradePetition_o tradePetition = new DtoTradePetition_o();
@@ -140,6 +150,28 @@ public class TradePetitionParser {
 
         tradePetition.setOffers(offer);
         tradePetition.setExpects(request);
+
+        return tradePetition;
+    }
+
+    public TradePetition DtoToTradePetition(DtoTradePetition_i dtoTradePetition){
+        String tpJwt = dtoTradePetition.getJwt();
+        String username = jwtService.extractUsername(tpJwt);
+        User tpUser = userService.loadUserByEmail(username);
+
+        TradePetition tradePetition = new TradePetition();
+        tradePetition.setUser(tpUser);
+        tradePetition.setCreationMs(System.currentTimeMillis());
+        tradePetition.setDescription(dtoTradePetition.getDescription());
+        List<Skin> requestedSkins = new LinkedList<>();
+        List<Sticker> requestedStickers = new LinkedList<>();
+        List<Crate> requestedCrated = new LinkedList<>();
+
+        // Expect side of the dtoTradePetition
+        DtoTradePetitionSide_i expectSide = dtoTradePetition.getExpects();
+        for (String skinId : expectSide.getSkins()){
+            RequestedSkin expectedSkin = RequestedSkin.builder().id(skinId).
+        }
 
         return tradePetition;
     }
