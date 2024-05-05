@@ -17,7 +17,12 @@ public class RequestedSticker {
     @jakarta.persistence.Id
     @Id
     @Column()
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "entities_requested_sequence")
+    @SequenceGenerator(name = "entities_requested_sequence", sequenceName = "entities_requested_sequence", allocationSize = 1)
     private Long id;
+
+    @Column(name = "trade_id")
+    private Long tradeId;
 
     @ManyToOne(optional = false)
     @JoinColumn(name="sticker_id", nullable=false)

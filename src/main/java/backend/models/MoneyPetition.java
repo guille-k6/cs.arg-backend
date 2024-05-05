@@ -17,7 +17,12 @@ public class MoneyPetition {
     @jakarta.persistence.Id
     @Id
     @Column()
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "money_petition_sequence")
+    @SequenceGenerator(name = "money_petition_sequence", sequenceName = "money_petition_sequence", allocationSize = 1)
     private Long id;
+
+    @Column(name = "trade_id")
+    private Long tradeId;
 
     @Column()
     private Long amount;

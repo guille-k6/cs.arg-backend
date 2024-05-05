@@ -21,6 +21,8 @@ public class RequestedSkin {
     @jakarta.persistence.Id
     @Id
     @Column()
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "entities_requested_sequence")
+    @SequenceGenerator(name = "entities_requested_sequence", sequenceName = "entities_requested_sequence", allocationSize = 1)
     private Long id;
 
     @Column(name = "trade_id")
@@ -50,7 +52,7 @@ public class RequestedSkin {
 
     private Boolean souvenir;
 
-    // 0 = request | 1 = offer
+    // false = request | true = offer
     @Column(name = "trade_type")
     private Boolean tradeType;
 }

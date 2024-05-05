@@ -90,8 +90,10 @@ public class TradePetitionsController {
     }
 
     @PostMapping("/create")
-    public ResponseEntity<?> createTradePetition(@RequestBody DtoTradePetition_i dtoTradePetition){
-        TradePetition tradePetition = tradePetitionParser.DtoToTradePetition(dtoTradePetition);
+    public ResponseEntity<?> createTradePetition(@RequestHeader("Authorization") String jwt, @RequestBody DtoTradePetition_i dtoTradePetition){
+        String tpJwt = jwt.split("Bearer ")[1];
+        TradePetition tradePetition = tradePetitionParser.DtoToTradePetition(dtoTradePetition, tpJwt);
+        System.out.println("a ver a ver...");
         if(tradePetitionService.createTradePetition(tradePetition)){
             return ResponseEntity.ok("Petición de intercambio dada de alta");
         }

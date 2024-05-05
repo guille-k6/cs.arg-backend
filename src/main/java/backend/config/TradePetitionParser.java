@@ -154,24 +154,60 @@ public class TradePetitionParser {
         return tradePetition;
     }
 
-    public TradePetition DtoToTradePetition(DtoTradePetition_i dtoTradePetition){
-        String tpJwt = dtoTradePetition.getJwt();
-        String username = jwtService.extractUsername(tpJwt);
+    public TradePetition DtoToTradePetition(DtoTradePetition_i dtoTradePetition, String jwt){
+        String username = jwtService.extractUsername(jwt);
         User tpUser = userService.loadUserByEmail(username);
 
         TradePetition tradePetition = new TradePetition();
         tradePetition.setUser(tpUser);
         tradePetition.setCreationMs(System.currentTimeMillis());
         tradePetition.setDescription(dtoTradePetition.getDescription());
-        List<Skin> requestedSkins = new LinkedList<>();
-        List<Sticker> requestedStickers = new LinkedList<>();
-        List<Crate> requestedCrated = new LinkedList<>();
-
-        // Expect side of the dtoTradePetition
+        List<RequestedSkin> requestedSkins = new LinkedList<>();
+        List<RequestedSticker> requestedStickers = new LinkedList<>();
+        List<RequestedCrate> requestedCrates = new LinkedList<>();
+        List<MoneyPetition> moneyOffers = new LinkedList<>();
+        // Expect side of the tradePetition
         DtoTradePetitionSide_i expectSide = dtoTradePetition.getExpects();
-        for (String skinId : expectSide.getSkins()){
-            RequestedSkin expectedSkin = RequestedSkin.builder().id(skinId).
+        for(RequestedSkin rSkin : expectSide.getSkins()){
+            rSkin.setTradeType(false);
+            requestedSkins.add(rSkin);
         }
+        for(RequestedSticker rSticker : expectSide.getStickers()){
+            rSticker.setTradeType(false);
+            requestedStickers.add(rSticker);
+        }
+        for(RequestedCrate rCrate : expectSide.getCrates()){
+            rCrate.setTradeType(false);
+            requestedCrates.add(rCrate);
+        }
+        MoneyPetition rMoneyPetition = expectSide.getMoney();
+        if(rMoneyPetition != null){
+            rMoneyPetition.setTradeType(false);
+            moneyOffers.add(rMoneyPetition);
+        }
+        // Offer side of the tradePetition
+        DtoTradePetitionSide_i offerSide = dtoTradePetition.getOffers();
+        for(RequestedSkin oSkin : offerSide.getSkins()){
+            oSkin.setTradeType(true);
+            requestedSkins.add(oSkin);
+        }
+        for(RequestedSticker oSticker : offerSide.getStickers()){
+            oSticker.setTradeType(true);
+            requestedStickers.add(oSticker);
+        }
+        for(RequestedCrate oCrate : offerSide.getCrates()){
+            oCrate.setTradeType(true);
+            requestedCrates.add(oCrate);
+        }
+        MoneyPetition oMoneyPetition = offerSide.getMoney();
+        if(oMoneyPetition != null){
+            oMoneyPetition.setTradeType(false);
+            moneyOffers.add(oMoneyPetition);
+        }
+        tradePetition.setRequestedSkins(requestedSkins);
+        tradePetition.setRequestedStickers(requestedStickers);
+        tradePetition.setRequestedCrates(requestedCrates);
+        tradePetition.setMoneyOffers(moneyOffers);
 
         return tradePetition;
     }

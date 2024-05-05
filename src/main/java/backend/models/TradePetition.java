@@ -22,6 +22,8 @@ public class TradePetition {
     @jakarta.persistence.Id
     @Id
     @Column()
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "trade_petitions_sequence")
+    @SequenceGenerator(name = "trade_petitions_sequence", sequenceName = "trade_petitions_sequence", allocationSize = 1)
     private Long id;
 
     @ManyToOne(optional = false)

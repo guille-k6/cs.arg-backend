@@ -4,6 +4,7 @@ import backend.config.TradePetitionParser;
 import backend.models.TradePetition;
 import backend.models.dtoResponse.DtoTradePetition_o;
 import backend.repository.TradePetitionRepository;
+import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;

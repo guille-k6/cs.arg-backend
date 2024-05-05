@@ -36,4 +36,8 @@ public class Skin {
 
     @Column(length = 256)
     private String image;
+
+    public Skin(String id){
+        this.id = id;
+    }
 }
