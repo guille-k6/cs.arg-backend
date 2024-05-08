@@ -12,6 +12,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.HashMap;
 import java.util.List;
+import java.util.Optional;
 
 import static backend.utils.UtilMethods.tryParsePageNumber;
 
@@ -71,5 +72,10 @@ public class SkinService {
 
         return this.skinRepository.getSkinsFiltered(name, weapon, category, pattern, rarity, pageable);
 
+    }
+
+    public boolean isValidSkinId(String id) {
+        Optional<Skin> skin = skinRepository.findById(id);
+        return skin.isPresent();
     }
 }

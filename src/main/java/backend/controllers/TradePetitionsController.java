@@ -94,9 +94,10 @@ public class TradePetitionsController {
         String tpJwt = jwt.split("Bearer ")[1];
         TradePetition tradePetition = tradePetitionParser.DtoToTradePetition(dtoTradePetition, tpJwt);
         System.out.println("a ver a ver...");
-        if(tradePetitionService.createTradePetition(tradePetition)){
-            return ResponseEntity.ok("Petición de intercambio dada de alta");
-        }
+        tradePetitionService.createTradePetition(tradePetition);
+        //if(tradePetitionService.createTradePetition(tradePetition)){
+        //    return ResponseEntity.ok("Petición de intercambio dada de alta");
+        //}
         return ResponseEntity.status(HttpStatus.CONFLICT).body("No se pudo crear la entidad.");
     }
 }

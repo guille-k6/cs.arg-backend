@@ -1,9 +1,11 @@
 package backend.service;
 
 import backend.config.TradePetitionParser;
-import backend.models.TradePetition;
+import backend.models.*;
 import backend.models.dtoResponse.DtoTradePetition_o;
+import backend.models.enums.SkinCondition;
 import backend.repository.TradePetitionRepository;
+import backend.repository.TradePetitionRepositoryc;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -13,6 +15,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import java.util.HashMap;
+import java.util.InvalidPropertiesFormatException;
 
 import static backend.utils.UtilMethods.getPageable;
 import static backend.utils.UtilMethods.tryParsePageNumber;
@@ -22,12 +25,20 @@ public class TradePetitionService {
 
     private final TradePetitionParser tradePetitionParser;
     private final TradePetitionRepository tradePetitionRepository;
+    private final TradePetitionRepositoryc tradePetitionRepositoryc;
+    private final SkinService skinService;
     private final int MAX_TRADE_PETITIONS_PER_PAGE = 15;
 
     @Autowired
-    public TradePetitionService(TradePetitionRepository tradePetitionRepository, TradePetitionParser tradePetitionParser){
+    public TradePetitionService(TradePetitionRepository tradePetitionRepository,
+                                TradePetitionParser tradePetitionParser,
+                                TradePetitionRepositoryc tradePetitionRepositoryc,
+                                SkinService skinService){
         this.tradePetitionRepository = tradePetitionRepository;
         this.tradePetitionParser = tradePetitionParser;
+        this.tradePetitionRepositoryc = tradePetitionRepositoryc;
+        this.skinService = skinService;
+
     }
 
     /**
@@ -136,13 +147,81 @@ public class TradePetitionService {
         return tradePetitionsDto;
     }
 
-    public boolean createTradePetition(TradePetition tradePetition) {
-        TradePetition updatedTradePetition;
-        try {
-            updatedTradePetition = tradePetitionRepository.save(tradePetition);
-        } catch (Exception e) {
-            return false;
+    public void createTradePetition(TradePetition tradePetition) throws Exception{
+        validateTradePetition(tradePetition);
+        tradePetitionRepositoryc.insertWithQuery(tradePetition);
+        // TODO: Terminar con las validaciones...
+        //return updatedTradePetition.getId() != null && updatedTradePetition.getId() >= 0;
+    }
+
+    /**
+     * Validates that a trade petition adheres to the business rules
+     * @param tradePetition trade petition that comes from the json parse of the request's body
+     * @throws Exception if it founds an error
+     */
+    public void validateTradePetition(TradePetition tradePetition) throws Exception {
+        final int MAX_REQUESTED_ITEMS = 4;
+        final int MAX_OFFERED_ITEMS = 4;
+        if(tradePetition.getUser() == null || tradePetition.getDescription() == null){
+            throw new InvalidPropertiesFormatException("Faltan cambios obligatorios en la peticion de intercambio");
         }
-        return updatedTradePetition.getId() != null && updatedTradePetition.getId() >= 0;
+        int requestedCounter = 0;
+        int offeredCounter = 0;
+        for(RequestedSkin requestedSkin : tradePetition.getRequestedSkins()){
+            if(requestedSkin.getSkin().getId() == null || requestedSkin.getCondition() == null ||
+               requestedSkin.getStattrak() == null || requestedSkin.getSouvenir() == null || requestedSkin.getTradeType()){
+                throw new InvalidPropertiesFormatException("Faltan cambios obligatorios en: Skin");
+            }
+            if(!skinService.isValidSkinId(requestedSkin.getSkin().getId())){
+                throw new InvalidPropertiesFormatException("ID de Skin no valido: " + requestedSkin.getSkin().getId());
+            }
+            if(!SkinCondition.isValidValue(requestedSkin.getCondition())){
+                throw new InvalidPropertiesFormatException("Condicion de Skin no valida: " + requestedSkin.getCondition());
+            }
+            // Validar stickers...
+            if(requestedSkin.getTradeType()){
+                offeredCounter++;
+            }else{
+                requestedCounter++;
+            }
+        }
+        for(RequestedSticker requestedSticker : tradePetition.getRequestedStickers()){
+            // Validar
+            if(requestedSticker.getTradeType()){
+                offeredCounter++;
+            }else{
+                requestedCounter++;
+            }
+        }
+        for(RequestedCrate requestedCrate : tradePetition.getRequestedCrates()){
+            // Validar
+            if(requestedCrate.getTradeType()){
+                offeredCounter++;
+            }else{
+                requestedCounter++;
+            }
+        }
+        boolean isAnyOfferMoneyPetition = false;
+        boolean isAnyRequestMoneyPetition = false;
+        for(MoneyPetition moneyPetition : tradePetition.getMoneyOffers()){
+            if(moneyPetition.getTradeType()){
+                isAnyOfferMoneyPetition = true;
+            }else{
+                isAnyRequestMoneyPetition = true;
+            }
+        }
+        if(requestedCounter == 0 && !isAnyRequestMoneyPetition){
+            throw new InvalidPropertiesFormatException("No puede existir una petición de intercambio que no pida nada");
+        }
+        if(offeredCounter == 0 && !isAnyOfferMoneyPetition){
+            throw new InvalidPropertiesFormatException("No puede existir una petición de intercambio que no ofrezca nada");
+        }
+        if(requestedCounter > MAX_REQUESTED_ITEMS){
+            throw new InvalidPropertiesFormatException("No se pueden pedir más de " + MAX_REQUESTED_ITEMS + " items.");
+        }
+        if(offeredCounter > MAX_OFFERED_ITEMS){
+            throw new InvalidPropertiesFormatException("No se pueden pedir más de " + MAX_REQUESTED_ITEMS + " items.");
+        }
+
     }
 }
