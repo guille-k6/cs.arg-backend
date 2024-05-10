@@ -1,5 +1,6 @@
 package backend.service;
 
+import backend.models.Sticker;
 import backend.repository.CrateRepository;
 import backend.utils.UtilMethods;
 import backend.models.Crate;
@@ -13,6 +14,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.HashMap;
 import java.util.List;
+import java.util.Optional;
 
 @Service
 public class CrateService {
@@ -63,5 +65,10 @@ public class CrateService {
             pageable = PageRequest.of(pageNumber, MAX_STICKERS_PER_PAGE, Sort.by(sortAttribute).descending());
         }
         return this.crateRepository.getCratesFiltered(name, pageable);
+    }
+
+    public boolean isValidCrateId(String id) {
+        Optional<Crate> crate = crateRepository.findById(id);
+        return crate.isPresent();
     }
 }

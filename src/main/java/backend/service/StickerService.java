@@ -1,5 +1,6 @@
 package backend.service;
 
+import backend.models.Skin;
 import backend.models.Sticker;
 import backend.repository.StickerRepository;
 import jakarta.transaction.Transactional;
@@ -12,6 +13,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.HashMap;
 import java.util.List;
+import java.util.Optional;
 
 import static backend.utils.UtilMethods.tryParsePageNumber;
 
@@ -66,4 +68,8 @@ public class StickerService {
 
     }
 
+    public boolean isValidStickerId(String id) {
+        Optional<Sticker> sticker = stickerRepository.findById(id);
+        return sticker.isPresent();
+    }
 }

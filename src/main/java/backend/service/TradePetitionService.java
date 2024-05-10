@@ -27,18 +27,23 @@ public class TradePetitionService {
     private final TradePetitionRepository tradePetitionRepository;
     private final TradePetitionRepositoryc tradePetitionRepositoryc;
     private final SkinService skinService;
+    private final StickerService stickerService;
+    private final CrateService crateService;
     private final int MAX_TRADE_PETITIONS_PER_PAGE = 15;
 
     @Autowired
     public TradePetitionService(TradePetitionRepository tradePetitionRepository,
                                 TradePetitionParser tradePetitionParser,
                                 TradePetitionRepositoryc tradePetitionRepositoryc,
-                                SkinService skinService){
+                                SkinService skinService,
+                                StickerService stickerService,
+                                CrateService crateService){
         this.tradePetitionRepository = tradePetitionRepository;
         this.tradePetitionParser = tradePetitionParser;
         this.tradePetitionRepositoryc = tradePetitionRepositoryc;
         this.skinService = skinService;
-
+        this.stickerService = stickerService;
+        this.crateService = crateService;
     }
 
     /**
@@ -147,6 +152,11 @@ public class TradePetitionService {
         return tradePetitionsDto;
     }
 
+    /**
+     * Validates and persists a trade petition
+     * @param tradePetition
+     * @throws Exception
+     */
     public void createTradePetition(TradePetition tradePetition) throws Exception{
         validateTradePetition(tradePetition);
         tradePetitionRepositoryc.insertWithQuery(tradePetition);
@@ -157,26 +167,30 @@ public class TradePetitionService {
     /**
      * Validates that a trade petition adheres to the business rules
      * @param tradePetition trade petition that comes from the json parse of the request's body
-     * @throws Exception if it founds an error
+     * @throws Exception
      */
     public void validateTradePetition(TradePetition tradePetition) throws Exception {
         final int MAX_REQUESTED_ITEMS = 4;
         final int MAX_OFFERED_ITEMS = 4;
-        if(tradePetition.getUser() == null || tradePetition.getDescription() == null){
-            throw new InvalidPropertiesFormatException("Faltan cambios obligatorios en la peticion de intercambio");
-        }
         int requestedCounter = 0;
         int offeredCounter = 0;
+        if(tradePetition.getUser() == null || tradePetition.getDescription() == null){
+            throw new InvalidPropertiesFormatException("Faltan campos obligatorios en la peticion de intercambio");
+        }
+
         for(RequestedSkin requestedSkin : tradePetition.getRequestedSkins()){
             if(requestedSkin.getSkin().getId() == null || requestedSkin.getCondition() == null ||
                requestedSkin.getStattrak() == null || requestedSkin.getSouvenir() == null || requestedSkin.getTradeType()){
-                throw new InvalidPropertiesFormatException("Faltan cambios obligatorios en: Skin");
+                throw new InvalidPropertiesFormatException("Faltan campos obligatorios en: Skin");
             }
             if(!skinService.isValidSkinId(requestedSkin.getSkin().getId())){
                 throw new InvalidPropertiesFormatException("ID de Skin no valido: " + requestedSkin.getSkin().getId());
             }
             if(!SkinCondition.isValidValue(requestedSkin.getCondition())){
                 throw new InvalidPropertiesFormatException("Condicion de Skin no valida: " + requestedSkin.getCondition());
+            }
+            if(requestedSkin.getFloatValue() != null && (requestedSkin.getFloatValue() < 0 || requestedSkin.getFloatValue() > 1)){
+                throw new InvalidPropertiesFormatException("El rango del float de una Skin debe estar entre 0 y 1");
             }
             // Validar stickers...
             if(requestedSkin.getTradeType()){
@@ -185,35 +199,55 @@ public class TradePetitionService {
                 requestedCounter++;
             }
         }
+
         for(RequestedSticker requestedSticker : tradePetition.getRequestedStickers()){
-            // Validar
+            if(requestedSticker.getTradeType() == null || requestedSticker.getSticker().getId() == null){
+                throw new InvalidPropertiesFormatException("Faltan campos obligatorios en: Sticker");
+            }
+            if(!stickerService.isValidStickerId(requestedSticker.getSticker().getId())){
+                throw new InvalidPropertiesFormatException("ID de Sticker no valido: " + requestedSticker.getSticker().getId());
+            }
             if(requestedSticker.getTradeType()){
                 offeredCounter++;
             }else{
                 requestedCounter++;
             }
         }
+
         for(RequestedCrate requestedCrate : tradePetition.getRequestedCrates()){
-            // Validar
+            if(requestedCrate.getTradeType() == null || requestedCrate.getCrate().getId() == null){
+                throw new InvalidPropertiesFormatException("Faltan campos obligatorios en: Caja");
+            }
+            if(!crateService.isValidCrateId(requestedCrate.getCrate().getId())){
+                throw new InvalidPropertiesFormatException("ID de Sticker no valido: " + requestedCrate.getCrate().getId());
+            }
             if(requestedCrate.getTradeType()){
                 offeredCounter++;
             }else{
                 requestedCounter++;
             }
         }
-        boolean isAnyOfferMoneyPetition = false;
-        boolean isAnyRequestMoneyPetition = false;
+
+        int moneyOffers = 0;
+        int moneyRequests = 0;
         for(MoneyPetition moneyPetition : tradePetition.getMoneyOffers()){
+            if(moneyPetition.getAmount() == null || moneyPetition.getCountryCode() == null || moneyPetition.getTradeType() == null){
+                throw new InvalidPropertiesFormatException("Faltan campos obligatorios en: Oferta de dinero");
+            }
             if(moneyPetition.getTradeType()){
-                isAnyOfferMoneyPetition = true;
+                moneyOffers++;
             }else{
-                isAnyRequestMoneyPetition = true;
+                moneyRequests++;
             }
         }
-        if(requestedCounter == 0 && !isAnyRequestMoneyPetition){
+
+        if(moneyOffers > 1 || moneyRequests > 1){
+            throw new InvalidPropertiesFormatException("Cantidad de ofertas de dinero no válidas");
+        }
+        if(requestedCounter == 0 && moneyRequests == 0){
             throw new InvalidPropertiesFormatException("No puede existir una petición de intercambio que no pida nada");
         }
-        if(offeredCounter == 0 && !isAnyOfferMoneyPetition){
+        if(offeredCounter == 0 && moneyOffers == 0){
             throw new InvalidPropertiesFormatException("No puede existir una petición de intercambio que no ofrezca nada");
         }
         if(requestedCounter > MAX_REQUESTED_ITEMS){
