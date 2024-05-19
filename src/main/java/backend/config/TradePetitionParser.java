@@ -154,11 +154,12 @@ public class TradePetitionParser {
         return tradePetition;
     }
 
-    public TradePetition DtoToTradePetition(DtoTradePetition_i dtoTradePetition, String jwt){
+    public TradePetition dtoToTradePetition(DtoTradePetition_i dtoTradePetition, String jwt){
         String username = jwtService.extractUsername(jwt);
         User tpUser = userService.loadUserByEmail(username);
 
         TradePetition tradePetition = new TradePetition();
+        tradePetition.setId(dtoTradePetition.getTradePetitionId());
         tradePetition.setUser(tpUser);
         tradePetition.setCreationMs(System.currentTimeMillis());
         tradePetition.setDescription(dtoTradePetition.getDescription());

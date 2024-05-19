@@ -10,6 +10,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 public class DtoTradePetition_i {
+        private Long tradePetitionId;
         private String description;
         private DtoTradePetitionSide_i offers;
         private DtoTradePetitionSide_i expects;

@@ -1,10 +1,12 @@
 package backend.repository;
 
 import backend.models.TradePetition;
+import backend.models.User;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 @Repository
@@ -61,4 +63,10 @@ public interface TradePetitionRepository extends JpaRepository<TradePetition, Lo
             "AND (:name IS NULL OR LOWER(sticker.name) LIKE '%' || :name || '%')"
             , nativeQuery = true)
     Page<TradePetition> getTradePetitionsSticker(Boolean petitionType, String name, Pageable pageable);
+
+    @Query("SELECT COUNT(tp) FROM TradePetition tp WHERE tp.user.id = :userId")
+    int countByUser(@Param("userId") Integer userId);
+
+    @Query("SELECT User FROM TradePetition tp WHERE tp.user.id = :id")
+    User getUser(Long id);
 }

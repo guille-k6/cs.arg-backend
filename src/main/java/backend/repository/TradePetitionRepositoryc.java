@@ -56,11 +56,90 @@ public class TradePetitionRepositoryc {
             Long requestedSkinId = ((Number) entityManager.createNativeQuery("SELECT lastval()").getSingleResult()).longValue();
             for(Sticker requestedSkinSticker : requestedSkin.getStickers()){
                 entityManager.createNativeQuery("INSERT INTO rskin_sticker(sticker_id, requested_skin_id) values(?,?)")
-                        .setParameter(1, requestedSkinId)
-                        .setParameter(2, requestedSkinSticker.getId())
+                        .setParameter(2, requestedSkinId)
+                        .setParameter(1, requestedSkinSticker.getId())
                         .executeUpdate();
             }
         }
+    }
+
+    @Transactional
+    public void updateWithQuery(TradePetition tradePetition) {
+        // Only allow to update the description of a tradePetition
+        Long tradePetitionId = tradePetition.getId();
+        entityManager.createNativeQuery("UPDATE trade_petition SET description = ? where id = ?")
+                .setParameter(1, tradePetition.getDescription())
+                .setParameter(2, tradePetitionId)
+                .executeUpdate();
+
+        for(MoneyPetition moneyPetition : tradePetition.getMoneyOffers()){
+            entityManager.createNativeQuery("UPDATE money_petition SET amount = ?, country_code = ?, trade_type = ? WHERE id = ? and trade_id = ?")
+                    .setParameter(1, moneyPetition.getAmount())
+                    .setParameter(2, moneyPetition.getCountryCode())
+                    .setParameter(3, moneyPetition.getTradeType())
+                    .setParameter(4, moneyPetition.getId())
+                    .setParameter(5, tradePetitionId)
+                    .executeUpdate();
+        }
+        for(RequestedSticker requestedSticker : tradePetition.getRequestedStickers()){
+            entityManager.createNativeQuery("UPDATE requested_sticker SET trade_type = ? WHERE id = ? and trade_id = ?")
+                    .setParameter(1, requestedSticker.getTradeType())
+                    .setParameter(2, requestedSticker.getId())
+                    .setParameter(3, tradePetitionId)
+                    .executeUpdate();
+        }
+        for(RequestedCrate requestedCrate : tradePetition.getRequestedCrates()){
+            entityManager.createNativeQuery("UPDATE requested_crate SET trade_type = ? WHERE id = ? and trade_id = ?")
+                    .setParameter(1, requestedCrate.getTradeType())
+                    .setParameter(2, requestedCrate.getId())
+                    .setParameter(3, tradePetitionId)
+                    .executeUpdate();
+        }
+        for(RequestedSkin requestedSkin : tradePetition.getRequestedSkins()){
+            entityManager.createNativeQuery("UPDATE requested_skin SET skin_id = ?, stattrak = ?, paint_pattern = ?, condition = ?, souvenir = ?, float_value = ?, trade_type = ? WHERE id ? and trade_id = ?")
+                    .setParameter(1, requestedSkin.getSkin().getId())
+                    .setParameter(2, requestedSkin.getStattrak())
+                    .setParameter(3, requestedSkin.getPattern())
+                    .setParameter(4, requestedSkin.getCondition())
+                    .setParameter(5, requestedSkin.getSouvenir())
+                    .setParameter(6, requestedSkin.getFloatValue())
+                    .setParameter(7, requestedSkin.getTradeType())
+                    .setParameter(8, requestedSkin.getId())
+                    .setParameter(9, tradePetitionId)
+                    .executeUpdate();
+            for(Sticker requestedSkinSticker : requestedSkin.getStickers()){
+                entityManager.createNativeQuery("UPDATE rskin_sticker SET sticker_id = ? WHERE id = ? and requested_skin_id = ?")
+                        .setParameter(1, requestedSkinSticker.getId())
+                        .setParameter(2, requestedSkinSticker.getId())
+                        .executeUpdate();
+                // TODO
+            }
+        }
+    }
+
+    public void deleteWithQuery(TradePetition tradePetition) {
+        Long tradePetitionId = tradePetition.getId();
+
+        for(RequestedSkin requestedSkin : tradePetition.getRequestedSkins()) {
+            entityManager.createNativeQuery("DELETE FROM rskin_sticker WHERE requested_skin_id = ?")
+                    .setParameter(1, requestedSkin.getId())
+                    .executeUpdate();
+        }
+        entityManager.createNativeQuery("DELETE FROM requested_skin WHERE trade_id = ?")
+                .setParameter(1, tradePetitionId)
+                .executeUpdate();
+        entityManager.createNativeQuery("DELETE FROM money_petition WHERE trade_id = ?")
+                .setParameter(1, tradePetitionId)
+                .executeUpdate();
+        entityManager.createNativeQuery("DELETE FROM requested_sticker WHERE trade_id = ?")
+                .setParameter(1, tradePetitionId)
+                .executeUpdate();
+        entityManager.createNativeQuery("DELETE FROM requested_crate WHERE trade_id = ?")
+                .setParameter(1, tradePetitionId)
+                .executeUpdate();
+        entityManager.createNativeQuery("DELETE FROM trade_petition  where id = ?")
+                .setParameter(1, tradePetitionId)
+                .executeUpdate();
     }
 }
 

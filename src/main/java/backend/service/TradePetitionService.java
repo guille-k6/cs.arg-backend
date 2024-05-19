@@ -3,6 +3,7 @@ package backend.service;
 import backend.config.TradePetitionParser;
 import backend.models.*;
 import backend.models.dtoResponse.DtoTradePetition_o;
+import backend.models.enums.Role;
 import backend.models.enums.SkinCondition;
 import backend.repository.TradePetitionRepository;
 import backend.repository.TradePetitionRepositoryc;
@@ -29,6 +30,7 @@ public class TradePetitionService {
     private final SkinService skinService;
     private final StickerService stickerService;
     private final CrateService crateService;
+    private final UserService userService;
     private final int MAX_TRADE_PETITIONS_PER_PAGE = 15;
 
     @Autowired
@@ -37,13 +39,15 @@ public class TradePetitionService {
                                 TradePetitionRepositoryc tradePetitionRepositoryc,
                                 SkinService skinService,
                                 StickerService stickerService,
-                                CrateService crateService){
+                                CrateService crateService,
+                                UserService userService){
         this.tradePetitionRepository = tradePetitionRepository;
         this.tradePetitionParser = tradePetitionParser;
         this.tradePetitionRepositoryc = tradePetitionRepositoryc;
         this.skinService = skinService;
         this.stickerService = stickerService;
         this.crateService = crateService;
+        this.userService = userService;
     }
 
     /**
@@ -60,7 +64,7 @@ public class TradePetitionService {
     }
 
     /**
-     *  Takes a map of parameters and returns a page of TradePetitions
+     * Takes a map of parameters and returns a page of TradePetitions
      * @param parameters map of parameters
      * @return page of the data transfer object TradePetition
      * @throws Exception when the parameters of the Tradepeetition are wrong
@@ -154,33 +158,92 @@ public class TradePetitionService {
 
     /**
      * Validates and persists a trade petition
-     * @param tradePetition
+     * @param tradePetition the tradePetition
      * @throws Exception
      */
-    public void createTradePetition(TradePetition tradePetition) throws Exception{
+    public void createTradePetition(TradePetition tradePetition) throws Exception {
+        checkUserRate(tradePetition);
         validateTradePetition(tradePetition);
         tradePetitionRepositoryc.insertWithQuery(tradePetition);
-        // TODO: Terminar con las validaciones...
-        //return updatedTradePetition.getId() != null && updatedTradePetition.getId() >= 0;
+    }
+
+    /**
+     * Updates an existing trade petition
+     * @param tradePetition trade petition
+     */
+    public void updateTradePetition(TradePetition tradePetition) throws Exception {
+        // In the tradePetition object I have the user that made the request, not the persisted
+        // so I have to check to database
+        checkUserUpdatePermissions(tradePetition);
+        validateTradePetition(tradePetition);
+        tradePetitionRepositoryc.updateWithQuery(tradePetition);
+
+    }
+
+    public void deleteTradePetition(TradePetition tradePetition) throws Exception {
+        // In the tradePetition object I have the user that made the request, not the persisted
+        // so I have to check to database
+        checkUserUpdatePermissions(tradePetition);
+        validateTradePetition(tradePetition);
+        tradePetitionRepositoryc.deleteWithQuery(tradePetition);
+
+    }
+
+    /**
+     * An user can only update a tradePetition if its the owner or if it's an admin user
+     * @param tradePetition the tradePetition
+     * @throws IllegalStateException if the user does not have permission to update the tradePetition
+     */
+    private void checkUserUpdatePermissions(TradePetition tradePetition) throws IllegalStateException {
+        User userOfTheRequest = tradePetition.getUser();
+        User userOwnerOfTheTradePetition = tradePetitionRepository.getUser(tradePetition.getId());
+        if(userOfTheRequest.getId().equals(userOwnerOfTheTradePetition.getId())
+          || Role.ADMIN.equals(userOfTheRequest.getRole())){
+            return;
+        }
+        throw new IllegalStateException("El usuario " + userOfTheRequest.getUsername() + " no tiene permisos de modificación");
+    }
+
+    /**
+     * Validates if an user is able to create trade petitions
+     * @param tradePetition the tradePetition
+     */
+    private void checkUserRate(TradePetition tradePetition) {
+        final int MAX_TRADE_PETITIONS_BY_USER = 10;
+        User tradePetitionUser = tradePetition.getUser();
+        int userTradePetitions = countByUser(tradePetitionUser);
+        if(userTradePetitions > MAX_TRADE_PETITIONS_BY_USER){
+            throw new IllegalStateException("El usuario: " + tradePetitionUser.getNickname() + " ha superado la cantidad de peticiones de intercambio maximas");
+        }
+    }
+
+    /**
+     * Counts the amount of trade petitions that an user has created
+     * @param tradePetitionUser the tradePetition
+     * @return amount of trade petitions created
+     */
+    private int countByUser(User tradePetitionUser) {
+        return tradePetitionRepository.countByUser(tradePetitionUser.getId());
     }
 
     /**
      * Validates that a trade petition adheres to the business rules
      * @param tradePetition trade petition that comes from the json parse of the request's body
-     * @throws Exception
+     * @throws Exception if the tradePetition is not valid according to the busniness rules
      */
     public void validateTradePetition(TradePetition tradePetition) throws Exception {
         final int MAX_REQUESTED_ITEMS = 4;
         final int MAX_OFFERED_ITEMS = 4;
+        final int MAX_STICKERS_BY_SKIN = 4;
         int requestedCounter = 0;
         int offeredCounter = 0;
-        if(tradePetition.getUser() == null || tradePetition.getDescription() == null){
-            throw new InvalidPropertiesFormatException("Faltan campos obligatorios en la peticion de intercambio");
+        if(tradePetition.getUser() == null){
+            throw new InvalidPropertiesFormatException("Falta el campo Usuario en la peticion de intercambio");
         }
 
         for(RequestedSkin requestedSkin : tradePetition.getRequestedSkins()){
             if(requestedSkin.getSkin().getId() == null || requestedSkin.getCondition() == null ||
-               requestedSkin.getStattrak() == null || requestedSkin.getSouvenir() == null || requestedSkin.getTradeType()){
+               requestedSkin.getStattrak() == null || requestedSkin.getSouvenir() == null || requestedSkin.getTradeType() == null){
                 throw new InvalidPropertiesFormatException("Faltan campos obligatorios en: Skin");
             }
             if(!skinService.isValidSkinId(requestedSkin.getSkin().getId())){
@@ -192,7 +255,16 @@ public class TradePetitionService {
             if(requestedSkin.getFloatValue() != null && (requestedSkin.getFloatValue() < 0 || requestedSkin.getFloatValue() > 1)){
                 throw new InvalidPropertiesFormatException("El rango del float de una Skin debe estar entre 0 y 1");
             }
-            // Validar stickers...
+            int stickerCounter = 0;
+            for(Sticker sticker : requestedSkin.getStickers()){
+                if(!stickerService.isValidStickerId(sticker.getId())){
+                    throw new InvalidPropertiesFormatException("ID de Sticker no valido: " + sticker.getId());
+                }
+                stickerCounter++;
+            }
+            if(stickerCounter > MAX_STICKERS_BY_SKIN){
+                throw new InvalidPropertiesFormatException("Hay demasiados stickers en: Skin");
+            }
             if(requestedSkin.getTradeType()){
                 offeredCounter++;
             }else{
@@ -219,7 +291,7 @@ public class TradePetitionService {
                 throw new InvalidPropertiesFormatException("Faltan campos obligatorios en: Caja");
             }
             if(!crateService.isValidCrateId(requestedCrate.getCrate().getId())){
-                throw new InvalidPropertiesFormatException("ID de Sticker no valido: " + requestedCrate.getCrate().getId());
+                throw new InvalidPropertiesFormatException("ID de Caja no valido: " + requestedCrate.getCrate().getId());
             }
             if(requestedCrate.getTradeType()){
                 offeredCounter++;

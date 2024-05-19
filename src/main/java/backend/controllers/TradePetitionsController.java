@@ -9,7 +9,6 @@ import io.micrometer.common.util.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -92,13 +91,25 @@ public class TradePetitionsController {
     @PostMapping("/create")
     public ResponseEntity<?> createTradePetition(@RequestHeader("Authorization") String jwt, @RequestBody DtoTradePetition_i dtoTradePetition){
         String tpJwt = jwt.split("Bearer ")[1];
-        TradePetition tradePetition = tradePetitionParser.DtoToTradePetition(dtoTradePetition, tpJwt);
-        System.out.println("a ver a ver...");
-        tradePetitionService.createTradePetition(tradePetition);
-        //if(tradePetitionService.createTradePetition(tradePetition)){
-        //    return ResponseEntity.ok("Petición de intercambio dada de alta");
-        //}
-        return ResponseEntity.status(HttpStatus.CONFLICT).body("No se pudo crear la entidad.");
+        TradePetition tradePetition = tradePetitionParser.dtoToTradePetition(dtoTradePetition, tpJwt);
+        try {
+            tradePetitionService.createTradePetition(tradePetition);
+            return ResponseEntity.ok("Peticion de intercambio creada correctamente");
+        } catch (Exception e){
+            return ResponseEntity.status(HttpStatus.CONFLICT).body("No se pudo crear la peticion de intercambio: " + e.getMessage());
+        }
+    }
+
+    @PostMapping("/update")
+    public ResponseEntity<?> updateTradePetition(@RequestHeader("Authorization") String jwt, @RequestBody DtoTradePetition_i dtoTradePetition){
+        String tpJwt = jwt.split("Bearer ")[1];
+        TradePetition tradePetition = tradePetitionParser.dtoToTradePetition(dtoTradePetition, tpJwt);
+        try {
+            tradePetitionService.updateTradePetition(tradePetition);
+            return ResponseEntity.ok("Peticion de intercambio actualizada correctamente");
+        } catch (Exception e){
+            return ResponseEntity.status(HttpStatus.CONFLICT).body("No se pudo actualizar la peticion de intercambio: " + e.getMessage());
+        }
     }
 }
 

@@ -41,7 +41,7 @@ public class RequestedSkin {
     private List<Sticker> stickers = new LinkedList<>();
 
     @Column(name = "float_value")
-    private Double floatValue;
+    private Integer floatValue; // leave it as int then divide it by aproximately 6 or 7
 
     private String condition;
 
