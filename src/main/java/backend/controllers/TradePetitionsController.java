@@ -1,7 +1,8 @@
 package backend.controllers;
 
-import backend.config.TradePetitionParser;
+import backend.config.TradePetitionHelper;
 import backend.models.TradePetition;
+import backend.models.dtoRequest.DeleteTradePetitionRequest;
 import backend.models.dtoRequest.DtoTradePetition_i;
 import backend.service.TradePetitionService;
 import backend.models.dtoResponse.DtoTradePetition_o;
@@ -13,16 +14,17 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.HashMap;
+import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/trade_petitions")
 public class TradePetitionsController {
     private final TradePetitionService tradePetitionService;
-    private final TradePetitionParser tradePetitionParser;
+    private final TradePetitionHelper tradePetitionHelper;
     @Autowired
-    public TradePetitionsController(TradePetitionService tradePetitionService, TradePetitionParser tradePetitionParser){
+    public TradePetitionsController(TradePetitionService tradePetitionService, TradePetitionHelper tradePetitionHelper){
         this.tradePetitionService = tradePetitionService;
-        this.tradePetitionParser = tradePetitionParser;
+        this.tradePetitionHelper = tradePetitionHelper;
     }
 
     @GetMapping("/public")
@@ -91,7 +93,7 @@ public class TradePetitionsController {
     @PostMapping("/create")
     public ResponseEntity<?> createTradePetition(@RequestHeader("Authorization") String jwt, @RequestBody DtoTradePetition_i dtoTradePetition){
         String tpJwt = jwt.split("Bearer ")[1];
-        TradePetition tradePetition = tradePetitionParser.dtoToTradePetition(dtoTradePetition, tpJwt);
+        TradePetition tradePetition = tradePetitionHelper.dtoToTradePetition(dtoTradePetition, tpJwt);
         try {
             tradePetitionService.createTradePetition(tradePetition);
             return ResponseEntity.ok("Peticion de intercambio creada correctamente");
@@ -103,12 +105,27 @@ public class TradePetitionsController {
     @PostMapping("/update")
     public ResponseEntity<?> updateTradePetition(@RequestHeader("Authorization") String jwt, @RequestBody DtoTradePetition_i dtoTradePetition){
         String tpJwt = jwt.split("Bearer ")[1];
-        TradePetition tradePetition = tradePetitionParser.dtoToTradePetition(dtoTradePetition, tpJwt);
+        TradePetition tradePetition = tradePetitionHelper.dtoToTradePetition(dtoTradePetition, tpJwt);
         try {
             tradePetitionService.updateTradePetition(tradePetition);
             return ResponseEntity.ok("Peticion de intercambio actualizada correctamente");
         } catch (Exception e){
             return ResponseEntity.status(HttpStatus.CONFLICT).body("No se pudo actualizar la peticion de intercambio: " + e.getMessage());
+        }
+    }
+
+    @PostMapping("/delete")
+    public ResponseEntity<?> deleteTradePetition(@RequestHeader("Authorization") String jwt, @RequestBody DeleteTradePetitionRequest deleteTradePetition){
+        String tpJwt = jwt.split("Bearer ")[1];
+        try {
+            Optional<TradePetition> tradePetition = tradePetitionService.checkIfTradePetitionIdExists(deleteTradePetition.getId());
+            if(tradePetition.isEmpty()){
+                return ResponseEntity.status(HttpStatus.CONFLICT).body("No existe peticion de intercambio con el id: " + deleteTradePetition.getId());
+            }
+            tradePetitionService.deleteTradePetition(tradePetition.get(), tpJwt);
+            return ResponseEntity.ok("Peticion de intercambio eliminada correctamente");
+        } catch (Exception e){
+            return ResponseEntity.status(HttpStatus.CONFLICT).body("No se pudo eliminar la peticion de intercambio: " + e.getMessage());
         }
     }
 }

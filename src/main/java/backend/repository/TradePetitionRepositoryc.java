@@ -108,15 +108,15 @@ public class TradePetitionRepositoryc {
                     .setParameter(9, tradePetitionId)
                     .executeUpdate();
             for(Sticker requestedSkinSticker : requestedSkin.getStickers()){
-                entityManager.createNativeQuery("UPDATE rskin_sticker SET sticker_id = ? WHERE id = ? and requested_skin_id = ?")
+                entityManager.createNativeQuery("UPDATE rskin_sticker SET sticker_id = ? WHERE requested_skin_id = ?")
                         .setParameter(1, requestedSkinSticker.getId())
-                        .setParameter(2, requestedSkinSticker.getId())
+                        .setParameter(2, requestedSkin.getId())
                         .executeUpdate();
-                // TODO
             }
         }
     }
 
+    @Transactional
     public void deleteWithQuery(TradePetition tradePetition) {
         Long tradePetitionId = tradePetition.getId();
 

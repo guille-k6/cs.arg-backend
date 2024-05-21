@@ -1,13 +1,14 @@
 package backend.service;
 
-import backend.config.TradePetitionParser;
+import backend.config.JwtService;
+import backend.config.TradePetitionHelper;
 import backend.models.*;
 import backend.models.dtoResponse.DtoTradePetition_o;
 import backend.models.enums.Role;
 import backend.models.enums.SkinCondition;
 import backend.repository.TradePetitionRepository;
 import backend.repository.TradePetitionRepositoryc;
-import jakarta.transaction.Transactional;
+import backend.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -17,6 +18,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.HashMap;
 import java.util.InvalidPropertiesFormatException;
+import java.util.Optional;
 
 import static backend.utils.UtilMethods.getPageable;
 import static backend.utils.UtilMethods.tryParsePageNumber;
@@ -24,30 +26,27 @@ import static backend.utils.UtilMethods.tryParsePageNumber;
 @Service
 public class TradePetitionService {
 
-    private final TradePetitionParser tradePetitionParser;
+    private final TradePetitionHelper tradePetitionHelper;
     private final TradePetitionRepository tradePetitionRepository;
     private final TradePetitionRepositoryc tradePetitionRepositoryc;
     private final SkinService skinService;
     private final StickerService stickerService;
     private final CrateService crateService;
-    private final UserService userService;
     private final int MAX_TRADE_PETITIONS_PER_PAGE = 15;
 
     @Autowired
     public TradePetitionService(TradePetitionRepository tradePetitionRepository,
-                                TradePetitionParser tradePetitionParser,
+                                TradePetitionHelper tradePetitionHelper,
                                 TradePetitionRepositoryc tradePetitionRepositoryc,
                                 SkinService skinService,
                                 StickerService stickerService,
-                                CrateService crateService,
-                                UserService userService){
+                                CrateService crateService){
         this.tradePetitionRepository = tradePetitionRepository;
-        this.tradePetitionParser = tradePetitionParser;
+        this.tradePetitionHelper = tradePetitionHelper;
         this.tradePetitionRepositoryc = tradePetitionRepositoryc;
         this.skinService = skinService;
         this.stickerService = stickerService;
         this.crateService = crateService;
-        this.userService = userService;
     }
 
     /**
@@ -60,7 +59,7 @@ public class TradePetitionService {
         Pageable pageable = PageRequest.of(pageNumber, MAX_TRADE_PETITIONS_PER_PAGE, Sort.by("creation_ms").descending());
         Page<TradePetition> tradePetitions = tradePetitionRepository.getAllTradePetitions(pageable);
         // Parse the pure trade petitions to the DtoTradePetition
-        return tradePetitions.map(tradePetitionParser::tradePetitionToDTO);
+        return tradePetitions.map(tradePetitionHelper::tradePetitionToDTO);
     }
 
     /**
@@ -91,7 +90,7 @@ public class TradePetitionService {
 
         if (parameters.size() == 0) {
             pageable = PageRequest.of(0, MAX_TRADE_PETITIONS_PER_PAGE);
-            return tradePetitionRepository.getAllTradePetitions(pageable).map(tradePetitionParser::tradePetitionToDTO);
+            return tradePetitionRepository.getAllTradePetitions(pageable).map(tradePetitionHelper::tradePetitionToDTO);
         }
 
         // If the parameter exists -> Underscores to spaces -> Assign to the variable.
@@ -145,11 +144,11 @@ public class TradePetitionService {
         if (item_type == null) {
             tradePetitionsDto = getAllUnfiltered(String.valueOf(page));
         } else if (item_type.equalsIgnoreCase("SKIN")) {
-            tradePetitionsDto = tradePetitionRepository.getTradePetitionsWeapon(parsed_search_type, name, weapon, rarity, condition, pattern, stattrak, souvenir, special, pageable).map(tradePetitionParser::tradePetitionToDTO);
+            tradePetitionsDto = tradePetitionRepository.getTradePetitionsWeapon(parsed_search_type, name, weapon, rarity, condition, pattern, stattrak, souvenir, special, pageable).map(tradePetitionHelper::tradePetitionToDTO);
         } else if (item_type.equalsIgnoreCase("CRATE")) {
-            tradePetitionsDto = tradePetitionRepository.getTradePetitionsCrate(parsed_search_type, name, pageable).map(tradePetitionParser::tradePetitionToDTO);
+            tradePetitionsDto = tradePetitionRepository.getTradePetitionsCrate(parsed_search_type, name, pageable).map(tradePetitionHelper::tradePetitionToDTO);
         } else if (item_type.equalsIgnoreCase("STICKER")) {
-            tradePetitionsDto = tradePetitionRepository.getTradePetitionsSticker(parsed_search_type, name, pageable).map(tradePetitionParser::tradePetitionToDTO);
+            tradePetitionsDto = tradePetitionRepository.getTradePetitionsSticker(parsed_search_type, name, pageable).map(tradePetitionHelper::tradePetitionToDTO);
         } else {
             throw new Exception("No se pudo procesar la petición.");
         }
@@ -180,13 +179,17 @@ public class TradePetitionService {
 
     }
 
-    public void deleteTradePetition(TradePetition tradePetition) throws Exception {
+    /**
+     *
+     * @param tradePetition the tradePetition to delete with the user who created it
+     * @param jwt the json web token that has the user that it's performing the request
+     * @throws Exception
+     */
+    public void deleteTradePetition(TradePetition tradePetition, String jwt) throws Exception {
         // In the tradePetition object I have the user that made the request, not the persisted
         // so I have to check to database
-        checkUserUpdatePermissions(tradePetition);
-        validateTradePetition(tradePetition);
+        checkUserDeletePermissions(tradePetition, jwt);
         tradePetitionRepositoryc.deleteWithQuery(tradePetition);
-
     }
 
     /**
@@ -197,9 +200,8 @@ public class TradePetitionService {
     private void checkUserUpdatePermissions(TradePetition tradePetition) throws IllegalStateException {
         User userOfTheRequest = tradePetition.getUser();
         User userOwnerOfTheTradePetition = tradePetitionRepository.getUser(tradePetition.getId());
-        if(userOfTheRequest.getId().equals(userOwnerOfTheTradePetition.getId())
-          || Role.ADMIN.equals(userOfTheRequest.getRole())){
-            return;
+        if(userOfTheRequest.getId().equals(userOwnerOfTheTradePetition.getId())  || Role.ADMIN.equals(userOfTheRequest.getRole())){
+            return; // Means the user is allowed to delete the tradePetition
         }
         throw new IllegalStateException("El usuario " + userOfTheRequest.getUsername() + " no tiene permisos de modificación");
     }
@@ -329,5 +331,23 @@ public class TradePetitionService {
             throw new InvalidPropertiesFormatException("No se pueden pedir más de " + MAX_REQUESTED_ITEMS + " items.");
         }
 
+    }
+
+    public Optional<TradePetition> checkIfTradePetitionIdExists(Long tradePetitionId){
+        return tradePetitionRepository.findById(tradePetitionId);
+    }
+
+    /**
+     * An user can only update a tradePetition if its the owner or if it's an admin user
+     * @param tradePetition the tradePetition
+     * @throws IllegalStateException if the user does not have permission to update the tradePetition
+     */
+    private void checkUserDeletePermissions(TradePetition tradePetition, String jwt) throws IllegalStateException {
+        User tradePetitionUser = tradePetition.getUser();
+        User requestUser = tradePetitionHelper.getUserFromJwt(jwt);
+        if(requestUser.getId().equals(tradePetitionUser.getId())  || Role.ADMIN.equals(requestUser.getRole())){
+            return; // Means the user is allowed to delete the tradePetition
+        }
+        throw new IllegalStateException("El usuario " + requestUser.getUsername() + " no tiene permisos para eliminar");
     }
 }

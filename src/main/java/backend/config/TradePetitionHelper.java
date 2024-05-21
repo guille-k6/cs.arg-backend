@@ -6,6 +6,7 @@ import backend.models.dtoRequest.DtoTradePetition_i;
 import backend.models.dtoResponse.*;
 import backend.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
@@ -13,14 +14,15 @@ import java.util.LinkedList;
 import java.util.List;
 
 /**
- * The purpose of this class is to Map from TradePetitions to their respectivo input or output Dto
+ * The purpose of this class is to Map from TradePetitions to their respective input or output Dto
  **/
 @Component
-public class TradePetitionParser {
+public class TradePetitionHelper {
     private final JwtService jwtService;
     private final UserService userService;
+
     @Autowired
-    public TradePetitionParser(JwtService jwtService, UserService userService){
+    public TradePetitionHelper(JwtService jwtService, @Lazy UserService userService){
         this.jwtService = jwtService;
         this.userService = userService;
     }
@@ -155,9 +157,7 @@ public class TradePetitionParser {
     }
 
     public TradePetition dtoToTradePetition(DtoTradePetition_i dtoTradePetition, String jwt){
-        String username = jwtService.extractUsername(jwt);
-        User tpUser = userService.loadUserByEmail(username);
-
+        User tpUser = getUserFromJwt(jwt);
         TradePetition tradePetition = new TradePetition();
         tradePetition.setId(dtoTradePetition.getTradePetitionId());
         tradePetition.setUser(tpUser);
@@ -211,5 +211,10 @@ public class TradePetitionParser {
         tradePetition.setMoneyOffers(moneyOffers);
 
         return tradePetition;
+    }
+
+    public User getUserFromJwt(String jwt){
+        String username = jwtService.extractUsername(jwt);
+        return userService.loadUserByEmail(username);
     }
 }
